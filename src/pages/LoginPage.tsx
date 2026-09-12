@@ -1,3 +1,33 @@
+import { IconBrandGoogle } from '@tabler/icons-react'
+import { Navigate } from 'react-router-dom'
+import { Button } from '../components/ui/Button'
+import { Card } from '../components/ui/Card'
+import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
+
 export function LoginPage() {
-  return <h1>Login</h1>
+  const { user, loading: authLoading, signInWithGoogle } = useAuth()
+  const { profile, loading: profileLoading } = useProfile(user?.id ?? null)
+
+  if (!authLoading && user) {
+    if (profileLoading) return null
+    return <Navigate to={profile ? '/home' : '/onboarding'} replace />
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+      <Card className="w-full max-w-md flex flex-col items-center gap-6 text-center">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-medium text-gray-900 dark:text-gray-100">GymTrack</h1>
+          <p className="text-base font-normal text-gray-500 dark:text-gray-400">
+            Escaneá el QR de una máquina y llevá registro de tu progreso.
+          </p>
+        </div>
+        <Button onClick={signInWithGoogle} className="flex items-center justify-center gap-2">
+          <IconBrandGoogle size={20} stroke={2} />
+          Iniciar sesión con Google
+        </Button>
+      </Card>
+    </div>
+  )
 }

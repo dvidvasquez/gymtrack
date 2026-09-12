@@ -87,7 +87,7 @@ Este proyecto avanza en fases secuenciales. Cada fase tiene un estado (COMPLETAD
 
 - **Fase 0 — Setup del entorno (COMPLETADA):** proyecto Vite + React + TypeScript, Tailwind, Supabase client configurado, rutas placeholder, estructura de carpetas.
 - **Fase 1 — Base de datos (COMPLETADA):** crear las tablas `machines`, `profiles`, `log_entries` en Supabase con sus columnas y relaciones, y configurar las políticas RLS para que cada usuario solo acceda a sus propios datos.
-- **Fase 2 — Autenticación:** login con Google vía Supabase Auth, pantalla de onboarding que guarda datos en `profiles`.
+- **Fase 2 — Autenticación (COMPLETADA):** login con Google vía Supabase Auth, pantalla de onboarding que guarda datos en `profiles`.
 - **Fase 3 — Escaneo y registro:** integrar lectura de QR con la cámara, mostrar el último registro de esa máquina, formulario para guardar un log nuevo.
 - **Fase 4 — Progreso:** pantalla de progreso por máquina con gráfico, pantalla Home con resumen básico.
 - **Fase 5 — Generación de QR físicos:** script para exportar un PNG de QR por cada máquina, para imprimir.
@@ -107,6 +107,17 @@ Fases 0 y 1 completadas. Scaffolding de Vite + React + TS, Tailwind v4, cliente 
 
 Esquema de base de datos aplicado en Supabase desde `supabase/migrations/20260912000000_initial_schema.sql`: tablas `profiles`, `machines`, `log_entries` con relaciones a `auth.users` y RLS habilitado (cada usuario accede solo a sus propios `profiles`/`log_entries`; `machines` es catálogo compartido, legible/editable por cualquier usuario autenticado).
 
-Sin lógica de negocio, sin servicios en `lib/services/` (carpeta creada pero vacía) — corresponde a la Fase 2 en adelante.
+Fase 2 completada. Implementado:
+- `lib/services/auth.ts` (`signInWithGoogle`, `signOut`, `getSession`, `subscribeToAuthChanges`) y `lib/services/profiles.ts` (`getProfileByUserId`, `createProfile`).
+- `hooks/useAuth.ts` (sesión) y `hooks/useProfile.ts` (perfil del usuario actual, con la regla de negocio de nombre no vacío).
+- `components/ui/Button.tsx`, `Card.tsx`, `Input.tsx` — primeras primitivas de UI según `DESIGN.md`.
+- `components/RequireAuth.tsx` y `RequireProfile.tsx` — guards de ruta anidados en `router/AppRouter.tsx` (sin sesión → `/login`; con sesión sin perfil → `/onboarding`; con perfil → resto de la app).
+- `pages/LoginPage.tsx` (botón "Iniciar sesión con Google") y `pages/OnboardingPage.tsx` (form de nombre) con estilos de `DESIGN.md`. `pages/HomePage.tsx` tiene un botón de cerrar sesión mínimo para poder probar el ciclo completo (contenido real de Home es Fase 4).
 
-**Fase actual: Fase 2 — Autenticación**, todavía no iniciada.
+Probado de punta a punta con una cuenta real de Google: primera vez cae en `/onboarding`, guarda el perfil, y en sesiones siguientes entra directo a `/home`.
+
+**Nota para el próximo agente:** `useProfile` deriva `loading` comparando el `userId` pedido contra el último `userId` para el que ya se tiene respuesta (`fetched.userId`) — no confiar solo en un booleano `loading` simple ahí, porque hubo un bug real de carrera (login → onboarding → home en loop infinito) causado por eso. Cualquier guard/hook nuevo que combine `useAuth()` + otro hook dependiente del `userId` debe esperar explícitamente a que `useAuth().loading` sea `false` antes de decidir con los datos del segundo hook (ver `components/RequireProfile.tsx`).
+
+Sin servicios de `machines`/`log_entries` todavía — corresponde a la Fase 3.
+
+**Fase actual: Fase 3 — Escaneo y registro**, todavía no iniciada.
