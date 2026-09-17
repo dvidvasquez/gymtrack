@@ -194,4 +194,13 @@ Verificado con TypeScript/lint/`vite build` limpios, y con Playwright: el formul
 
 Probado de punta a punta por el usuario con sesión real: pide los datos faltantes al iniciar sesión y se pueden editar después desde el menú → Perfil.
 
+## Plan para Fase 7 — Demo
+
+1. **`vercel.json` agregado** (rewrite de SPA: todas las rutas sirven `index.html`, sino refrescar en `/home` o cualquier ruta que no sea `/` da 404 en Vercel). Ya en el repo.
+2. **Conectar el repo a Vercel** (requiere la cuenta del usuario, no se puede hacer desde acá): importar `dvidvasquez/gymtrack` desde GitHub en Vercel — detecta Vite automáticamente (build `vite build`, output `dist`). Configurar ahí las env vars `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (mismos valores que el `.env` local).
+3. **Una vez desplegado, actualizar con la URL real de producción:**
+   - Supabase → Authentication → URL Configuration: agregar la URL de Vercel a Site URL / Redirect URLs (hoy solo tiene `localhost:5173`).
+   - Google Cloud Console → credencial OAuth → Authorized JavaScript origins: agregar la misma URL.
+4. **Prueba end-to-end en producción**: login con Google, completar/editar perfil, escanear QR, guardar registro, ver progreso, cerrar sesión.
+
 **Fase actual: Fase 7 — Demo**, todavía no iniciada.
