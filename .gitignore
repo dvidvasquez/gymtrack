@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# QR generados por scripts/generate-qr-codes.mjs (Fase 5) — artefactos, no código
+scripts/output/
+
 # Environment variables
 .env
 .env.*
