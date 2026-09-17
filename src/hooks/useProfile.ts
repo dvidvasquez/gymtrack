@@ -1,17 +1,42 @@
 import { useCallback, useEffect, useState } from 'react'
-import { createProfile, getProfileByUserId } from '../lib/services/profiles'
+import {
+  createProfile,
+  getProfileByUserId,
+  updateProfile,
+  type ProfileDetailsInput,
+} from '../lib/services/profiles'
 import type { Profile } from '../types/domain'
+
+export type ProfileFormInput = ProfileDetailsInput
+
+// Un perfil "completo" tiene todo lo necesario para generar informes más
+// adelante (peso, estatura, fecha de nacimiento) además del nombre. Hasta
+// que no esté completo, RequireProfile manda al usuario a completarlo.
+export function isProfileComplete(profile: Profile | null): boolean {
+  return (
+    profile !== null &&
+    profile.weightKg !== null &&
+    profile.heightCm !== null &&
+    profile.birthDate !== null
+  )
+}
 
 interface UseProfileResult {
   profile: Profile | null
   loading: boolean
-  createProfile: (displayName: string) => Promise<Profile>
+  saveProfileDetails: (input: ProfileFormInput) => Promise<Profile>
 }
 
 interface FetchedProfile {
   userId: string | null
   profile: Profile | null
 }
+
+const MIN_WEIGHT_KG = 1
+const MAX_WEIGHT_KG = 500
+const MIN_HEIGHT_CM = 1
+const MAX_HEIGHT_CM = 300
+const MIN_BIRTH_DATE = new Date('1900-01-01')
 
 export function useProfile(userId: string | null): UseProfileResult {
   const [fetched, setFetched] = useState<FetchedProfile>({ userId: null, profile: null })
@@ -26,11 +51,17 @@ export function useProfile(userId: string | null): UseProfileResult {
 
     let cancelled = false
     setFetching(true)
-    getProfileByUserId(userId).then((result) => {
-      if (cancelled) return
-      setFetched({ userId, profile: result })
-      setFetching(false)
-    })
+    getProfileByUserId(userId)
+      .then((result) => {
+        if (cancelled) return
+        setFetched({ userId, profile: result })
+        setFetching(false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setFetched({ userId, profile: null })
+        setFetching(false)
+      })
 
     return () => {
       cancelled = true
@@ -45,19 +76,54 @@ export function useProfile(userId: string | null): UseProfileResult {
   const loading = userId !== null && (isStale || fetching)
   const profile = isStale ? null : fetched.profile
 
-  const handleCreateProfile = useCallback(
-    async (displayName: string) => {
+  const saveProfileDetails = useCallback(
+    async (input: ProfileFormInput) => {
       if (!userId) throw new Error('No hay usuario autenticado')
 
-      const trimmed = displayName.trim()
-      if (!trimmed) throw new Error('El nombre no puede estar vacío')
+      const displayName = input.displayName.trim()
+      if (!displayName) throw new Error('El nombre no puede estar vacío')
 
-      const created = await createProfile(userId, trimmed)
-      setFetched({ userId, profile: created })
-      return created
+      if (
+        !Number.isFinite(input.weightKg) ||
+        input.weightKg < MIN_WEIGHT_KG ||
+        input.weightKg > MAX_WEIGHT_KG
+      ) {
+        throw new Error('Ingresá un peso válido en kg')
+      }
+
+      if (
+        !Number.isFinite(input.heightCm) ||
+        input.heightCm < MIN_HEIGHT_CM ||
+        input.heightCm > MAX_HEIGHT_CM
+      ) {
+        throw new Error('Ingresá una estatura válida en cm')
+      }
+
+      const birthDate = new Date(input.birthDate)
+      if (
+        Number.isNaN(birthDate.getTime()) ||
+        birthDate < MIN_BIRTH_DATE ||
+        birthDate > new Date()
+      ) {
+        throw new Error('Ingresá una fecha de nacimiento válida')
+      }
+
+      const details: ProfileDetailsInput = {
+        displayName,
+        weightKg: input.weightKg,
+        heightCm: input.heightCm,
+        birthDate: input.birthDate,
+      }
+
+      const saved = profile
+        ? await updateProfile(userId, details)
+        : await createProfile(userId, details)
+
+      setFetched({ userId, profile: saved })
+      return saved
     },
-    [userId],
+    [userId, profile],
   )
 
-  return { profile, loading, createProfile: handleCreateProfile }
+  return { profile, loading, saveProfileDetails }
 }

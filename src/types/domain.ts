@@ -8,6 +8,9 @@ export interface Profile {
   id: string
   userId: string
   displayName: string
+  weightKg: number | null
+  heightCm: number | null
+  birthDate: string | null
   createdAt: string
 }
 

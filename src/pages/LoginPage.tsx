@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { useAuth } from '../hooks/useAuth'
-import { useProfile } from '../hooks/useProfile'
+import { isProfileComplete, useProfile } from '../hooks/useProfile'
 
 export function LoginPage() {
   const { user, loading: authLoading, signInWithGoogle } = useAuth()
@@ -11,7 +11,7 @@ export function LoginPage() {
 
   if (!authLoading && user) {
     if (profileLoading) return null
-    return <Navigate to={profile ? '/home' : '/onboarding'} replace />
+    return <Navigate to={isProfileComplete(profile) ? '/home' : '/onboarding'} replace />
   }
 
   return (

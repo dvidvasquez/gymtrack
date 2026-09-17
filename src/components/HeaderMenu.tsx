@@ -1,10 +1,10 @@
-import { IconLogout, IconMenu2 } from '@tabler/icons-react'
+import { IconLogout, IconMenu2, IconUser } from '@tabler/icons-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
-// Menú hamburguesa del header: hoy solo tiene "Cerrar sesión", pero queda
-// como el lugar para sumar más acciones globales (ej. Perfil) sin volver
-// a ocupar espacio permanente en el footer o repetirse por página.
+// Menú hamburguesa del header: acciones/navegación globales que no ameritan
+// espacio permanente en el footer ni repetirse por página.
 export function HeaderMenu() {
   const { signOut } = useAuth()
   const [open, setOpen] = useState(false)
@@ -49,6 +49,16 @@ export function HeaderMenu() {
           role="menu"
           className="absolute right-0 top-full mt-2 w-44 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-1 shadow-sm"
         >
+          <Link
+            to="/profile"
+            viewTransition
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm font-normal text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            <IconUser size={18} stroke={2} />
+            Perfil
+          </Link>
           <button
             type="button"
             role="menuitem"

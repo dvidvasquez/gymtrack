@@ -91,7 +91,7 @@ Este proyecto avanza en fases secuenciales. Cada fase tiene un estado (COMPLETAD
 - **Fase 3 — Escaneo y registro (COMPLETADA):** integrar lectura de QR con la cámara, mostrar el último registro de esa máquina, formulario para guardar un log nuevo.
 - **Fase 4 — Progreso (COMPLETADA):** pantalla de progreso por máquina con gráfico, pantalla Home con resumen básico.
 - **Fase 5 — Generación de QR físicos (COMPLETADA):** script para exportar un PNG de QR por cada máquina, para imprimir.
-- **Fase 6 — Perfil extendido (pendiente, plan abajo):** agregar peso, estatura y fecha de nacimiento al perfil del usuario — se piden al iniciar sesión si todavía no los tiene (una sola vez), y se pueden ver/editar después desde una pantalla de Perfil real, accesible desde el menú hamburguesa. Pensado para más adelante generar informes cruzando esta info con los registros de la app. Ver "Plan para Fase 6" en Estado actual.
+- **Fase 6 — Perfil extendido (EN CURSO):** agregar peso, estatura y fecha de nacimiento al perfil del usuario — se piden al iniciar sesión si todavía no los tiene (una sola vez), y se pueden ver/editar después desde una pantalla de Perfil real, accesible desde el menú hamburguesa. Pensado para más adelante generar informes cruzando esta info con los registros de la app.
 - **Fase 7 — Demo:** deploy en Vercel, prueba end-to-end antes de mostrárselo al dueño del gimnasio.
 - **Fase 8 (futura, no MVP) — Offline-first:** guardado local con IndexedDB y sincronización en segundo plano cuando el usuario recupera conexión. No implementar hasta que se indique explícitamente.
 
@@ -174,24 +174,22 @@ Ajuste posterior, también pedido explícito: el footer de `AppShell` pasó de t
 
 Este checkpoint (rediseño de navegación + paleta + footer dinámico) quedó verificado con TypeScript/lint/`vite build` limpios y con Playwright (rutas temporales, cámara falsa donde hizo falta) para cada pieza: header sticky, footer fijo, menú hamburguesa abre/cierra, cámara se libera al salir de Scan, paleta roja legible en claro/oscuro, y el footer dinámico (contexto + submit cross-DOM vía atributo `form`) probado de punta a punta con una página de prueba aislada. El usuario confirmó en dispositivo real que las transiciones y el resto se sienten bien.
 
-## Plan para Fase 6 — Perfil extendido
+## Fase 6 — Perfil extendido
 
 Objetivo: agregar peso, estatura y fecha de nacimiento al perfil, pedidos una sola vez (al iniciar sesión, si faltan) y editables después desde una pantalla de Perfil real, accesible desde el menú hamburguesa. Pensado para generar informes más adelante combinando esto con los `log_entries`.
 
-**Piezas identificadas (a implementar en la próxima sesión):**
+**Decisiones tomadas** (no se le preguntaron al usuario todas, se asumieron razonablemente y se puede ajustar si hace falta): unidades kg/cm, los tres campos son obligatorios para considerar el perfil "completo" (sin opción de omitir), un solo formulario (no pasos separados), validaciones simples de rango (peso 1–500kg, estatura 1–300cm, fecha de nacimiento entre 1900 y hoy).
 
-1. **Migración SQL** (`supabase/migrations/`): agregar a `profiles` — `weight_kg numeric`, `height_cm numeric`, `birth_date date`, las tres **nullable** (los perfiles ya existentes, como el del usuario que está probando la app ahora mismo, no las van a tener hasta completarlas).
-2. **`types/domain.ts`**: `Profile` gana `weightKg: number | null`, `heightCm: number | null`, `birthDate: string | null`.
-3. **`lib/services/profiles.ts`**: `createProfile` pasa a aceptar estos campos también; agregar `updateProfile(userId, fields)` para editarlos después desde la pantalla de Perfil (no existía necesidad de update hasta ahora).
-4. **Regla de negocio "perfil completo"**: vive en `useProfile` (o un hook nuevo que lo derive) — `profile` existe pero le faltan `weightKg`/`heightCm`/`birthDate` ⇒ incompleto. Esta regla es la que decide si hay que pedir los datos.
-5. **Gating — el punto más delicado:** hoy `RequireProfile` solo chequea "¿existe fila en `profiles`?" (ver `components/RequireProfile.tsx`). Con esta fase, un perfil puede existir pero estar incompleto (todos los usuarios actuales van a estar en este caso apenas se aplique la migración). Hace falta decidir: ¿se reusa `OnboardingPage` para pedir los campos faltantes cuando el perfil existe pero está incompleto (además de cuando no existe), o es una pantalla/paso separado? Cualquiera sea la opción, aplicar la misma lección ya documentada arriba sobre `useAuth().loading` + hooks combinados (bug de loop infinito de la Fase 2) — no repetir esa carrera acá.
-6. **`ProfilePage`** (hoy placeholder): formulario real con nombre, peso, estatura, fecha de nacimiento — mostrar valores actuales y permitir editarlos (usa `updateProfile`).
-7. **`HeaderMenu.tsx`**: agregar un ítem "Perfil" (con su ícono, ej. `IconUser`) que navegue a `/profile`, arriba o abajo de "Cerrar sesión".
+**Implementado:**
+1. `supabase/migrations/20260917000000_profile_biometrics.sql`: `weight_kg numeric(5,2)`, `height_cm numeric(5,1)`, `birth_date date` en `profiles`, las tres **nullable** con `check` de rango. Aplicada en el proyecto real.
+2. `types/domain.ts`: `Profile` con `weightKg`, `heightCm`, `birthDate` (los tres `number | null` / `string | null`).
+3. `lib/services/profiles.ts`: `createProfile`/`updateProfile` aceptan los 4 campos juntos (`ProfileDetailsInput`).
+4. `hooks/useProfile.ts`: expone `isProfileComplete(profile)` (export, no solo hook — lo usan `RequireProfile` y `LoginPage` además del propio hook) y `saveProfileDetails(input)`, que decide sola si hace `createProfile` o `updateProfile` según si `profile` ya existe — así `OnboardingPage` y `ProfilePage` llaman a lo mismo sin duplicar esa decisión. Validación de rangos vive acá (regla de negocio), no en los componentes. De paso se le agregó el `.catch()` que le faltaba (mismo bug de la Fase 4, ver nota arriba — este hook se había quedado afuera esa vez).
+5. **Gating:** `components/RequireProfile.tsx` y `pages/LoginPage.tsx` ahora chequean `isProfileComplete(profile)` en vez de solo `!!profile`. Un perfil que existe pero le faltan datos biométricos se trata igual que "no tiene perfil" — lo manda a `/onboarding`.
+6. `components/ProfileForm.tsx` (nuevo, compartido): los 4 campos (nombre, peso, estatura, fecha de nacimiento), **sin botón propio** — mismo patrón que `LogPage`, quien lo usa decide el trigger de guardado vía atributo `form={id}`. `OnboardingPage` le pone un botón "Continuar" normal (está fuera de `AppShell`, sin footer); `ProfilePage` usa el footer dinámico (`useFooterAction` con `kind: 'save'`), y al guardar muestra un banner de confirmación en la misma pantalla (no navega, es edición) en vez del patrón de `LogPage` (que sí navega a Home).
+7. `OnboardingPage`: si el perfil ya existe pero está incompleto, prellena nombre y muestra "Completá tu perfil" en vez de "Contanos quién sos"; al guardar navega explícito a `/home` (no depende de esperar un re-render, como antes).
+8. `HeaderMenu.tsx`: nuevo ítem "Perfil" (`IconUser`) arriba de "Cerrar sesión".
 
-**Preguntas a resolver con el usuario al arrancar la sesión (no asumir):**
-- Unidades: asumo kg/cm (el resto de la app ya usa kg) salvo que se pida lo contrario.
-- ¿Los tres campos son obligatorios para poder pasar, o se puede omitir alguno (ej. "prefiero no decir mi fecha de nacimiento")?
-- Validaciones concretas: rangos razonables de peso/estatura, edad mínima para la fecha de nacimiento.
-- ¿Un solo paso (mismo formulario que hoy pide el nombre) o pantallas separadas?
+Verificado con TypeScript/lint/`vite build` limpios, y con Playwright: el formulario completo renderiza bien en Onboarding y en Profile (con el footer mostrando el ícono de guardar), el menú muestra "Perfil", y confirmé que el botón del footer efectivamente dispara el submit del formulario real de `ProfilePage` (sin sesión real esto termina en el error esperado "No hay usuario autenticado", mostrado inline — no un submit de página completa). **Falta la prueba end-to-end con una sesión real**: completar el perfil desde `/onboarding` (usuario nuevo) y desde `/profile` con un perfil ya completo (edición).
 
-**Fase actual: Fase 6 — Perfil extendido**, todavía no iniciada (plan de arriba pendiente de ejecutar).
+**Fase actual: Fase 6 — Perfil extendido**, pendiente de prueba manual con sesión real.
