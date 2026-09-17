@@ -225,6 +225,6 @@ Implementado:
 
 Verificado con `tsc`, `oxlint` y `vite build` limpios, y con Playwright (rutas temporales, como en fases anteriores) contra el Supabase de producción todavía sin migrar: `/exercises` muestra el estado de error correctamente (antes se tragaba en silencio como "no hay ejercicios" — se corrigió para mostrar el error real) y el form de alta renderiza bien.
 
-**Falta la prueba end-to-end con la migración aplicada y sesión real**: correr la migración sobre los datos reales (hay que verificar el nombre de la constraint `log_entries_machine_id_fkey` con `\d log_entries` antes del `drop constraint`, por si Postgres la nombró distinto), promoverse a `owner` a mano, y probar en el dispositivo real: dar de alta un ejercicio sin QR, loguear una serie contra él, y confirmar que aparece en Home y en su gráfico de progreso.
+Migración aplicada sobre los datos reales y probado de punta a punta por el usuario con sesión real: alta de un ejercicio sin QR, registro contra él, y aparece correctamente en Home y en su gráfico de progreso.
 
 **Fase actual: ninguna — Fases 0 a 8 completas.** La Fase 9 (Offline-first) es futura y no se arranca sin pedido explícito del usuario; no asumir que "seguir con la siguiente fase" significa esa.
