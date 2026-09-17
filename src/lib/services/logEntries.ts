@@ -1,5 +1,6 @@
-import type { LogEntry } from '../../types/domain'
+import type { LogEntry, Machine } from '../../types/domain'
 import { supabase } from '../supabaseClient'
+import { toMachine, type MachineRow } from './machines'
 
 interface LogEntryRow {
   id: string
@@ -67,4 +68,49 @@ export async function createLogEntry(input: CreateLogEntryInput): Promise<LogEnt
 
   if (error) throw error
   return toLogEntry(data)
+}
+
+export async function getLogEntriesForMachine(
+  machineId: string,
+  userId: string,
+): Promise<LogEntry[]> {
+  const { data, error } = await supabase
+    .from('log_entries')
+    .select('*')
+    .eq('machine_id', machineId)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []).map(toLogEntry)
+}
+
+export interface LogEntryWithMachine {
+  logEntry: LogEntry
+  machine: Machine
+}
+
+interface LogEntryWithMachineRow extends LogEntryRow {
+  machines: MachineRow | null
+}
+
+export async function getRecentLogEntries(
+  userId: string,
+  limit = 50,
+): Promise<LogEntryWithMachine[]> {
+  const { data, error } = await supabase
+    .from('log_entries')
+    .select('*, machines(*)')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) throw error
+
+  return ((data ?? []) as LogEntryWithMachineRow[])
+    .filter((row) => row.machines !== null)
+    .map((row) => ({
+      logEntry: toLogEntry(row),
+      machine: toMachine(row.machines as MachineRow),
+    }))
 }

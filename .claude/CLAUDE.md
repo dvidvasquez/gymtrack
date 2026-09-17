@@ -89,7 +89,7 @@ Este proyecto avanza en fases secuenciales. Cada fase tiene un estado (COMPLETAD
 - **Fase 1 — Base de datos (COMPLETADA):** crear las tablas `machines`, `profiles`, `log_entries` en Supabase con sus columnas y relaciones, y configurar las políticas RLS para que cada usuario solo acceda a sus propios datos.
 - **Fase 2 — Autenticación (COMPLETADA):** login con Google vía Supabase Auth, pantalla de onboarding que guarda datos en `profiles`.
 - **Fase 3 — Escaneo y registro (COMPLETADA):** integrar lectura de QR con la cámara, mostrar el último registro de esa máquina, formulario para guardar un log nuevo.
-- **Fase 4 — Progreso:** pantalla de progreso por máquina con gráfico, pantalla Home con resumen básico.
+- **Fase 4 — Progreso (COMPLETADA):** pantalla de progreso por máquina con gráfico, pantalla Home con resumen básico.
 - **Fase 5 — Generación de QR físicos:** script para exportar un PNG de QR por cada máquina, para imprimir.
 - **Fase 6 — Demo:** deploy en Vercel, prueba end-to-end antes de mostrárselo al dueño del gimnasio.
 - **Fase 7 (futura, no MVP) — Offline-first:** guardado local con IndexedDB y sincronización en segundo plano cuando el usuario recupera conexión. No implementar hasta que se indique explícitamente.
@@ -103,8 +103,16 @@ Este proyecto avanza en fases secuenciales. Cada fase tiene un estado (COMPLETAD
 - **QR con `html5-qrcode`.** Elegida sobre alternativas (`@yudiel/react-qr-scanner`, etc.) por ser la más madura/estable para lectura por cámara en mobile. Es una dependencia pesada (agrega ~250kb gzip al bundle, ver warning de `vite build`); si el tamaño del bundle se vuelve un problema, la solución es code-splitting de `ScanPage` con `React.lazy` (no implementado todavía, no hacía falta para el alcance de la Fase 3).
 - **No hay UI para crear `machines` todavía.** Ninguna fase del plan la pide explícitamente. Las máquinas de prueba se cargan a mano vía `supabase/seed.sql` (INSERT directo). Si en algún momento se pide gestionar máquinas desde la app, es una decisión a tomar explícitamente (probablemente amerite su propia fase), no algo para agregar de paso.
 - **El QR codifica el valor de `machines.qr_code`** (un string corto como `machine-press-banca`), no el `id` (uuid) ni una URL completa. `ScanPage` navega a `/log/:qrCode` con ese valor tal cual, y `LogPage` resuelve la máquina vía `getMachineByQrCode`. La Fase 5 (generación de QR físicos) debe imprimir un QR por cada `qr_code`, no por `id`.
+- **Gráfico con `recharts`.** Elegida sobre dibujar un line chart a mano en SVG por dar ejes/tooltips/responsive sin reinventar nada — a costa de otra dependencia de tamaño moderado (el bundle ya pasó los 500kb gzip advertidos por `vite build` sumando `html5-qrcode` + `recharts`). Si el tamaño se vuelve un problema real, la solución sigue siendo code-splitting de `ScanPage`/`ProgressPage` con `React.lazy` (ninguna de las dos se cargaría en el bundle inicial), no cambiar de librería.
+- **`ProgressPage` usa `/progress/:machineId`** (el `id` de la máquina), no el `qrCode` como `LogPage`. Tiene sentido porque a esta pantalla se llega navegando desde `MachineCard` en Home (que ya tiene el `machine.id` a mano, no hace falta re-resolver por QR). Por eso existe `getMachineById` en `lib/services/machines.ts` además de `getMachineByQrCode` — son dos formas de entrada distintas, no redundancia.
 
 **Nota para el próximo agente:** `Html5Qrcode.stop()` (usado en `hooks/useQrScanner.ts`) tira una excepción **síncrona** (no una promesa rechazada) si se llama antes de que la cámara termine de arrancar o después de ya haber parado. En desarrollo, `StrictMode` monta/desmonta/vuelve a montar los efectos muy rápido, así que el cleanup del hook puede correr antes de que `.start()` resuelva — llamar `.stop()` ahí crasheaba toda la página. La solución es chequear `scanner.isScanning` antes de llamar `.stop()`, y si el cleanup corrió mientras `.start()` todavía estaba pendiente, parar el scanner recién cuando esa promesa resuelva (ver el flag `cancelled` en `useQrScanner.ts`). Cualquier código nuevo que envuelva una librería de cámara/hardware con un ciclo de vida async debe tener este mismo cuidado.
+
+**Nota para el próximo agente (2):** todo hook que hace `algúnServicio(...).then(...)` sin un `.catch()` se queda colgado en `loading: true` para siempre si la promesa se rechaza (pasó en `useMachineById`, `useMachineHistory`, `useLastEntry`, `useRecentActivity` — encontrado probando con un id inválido, que hace que Supabase devuelva 400). Todo hook de fetch nuevo tiene que manejar el `.catch()` explícitamente y bajar `loading` ahí también, no solo en el `.then()`.
+
+**Nota para el próximo agente (4):** en los ejes de `ProgressPage` (`recharts`) **no usar** `stroke="currentColor"` + una clase `text-gray-500 dark:text-gray-400` de Tailwind para colorear el texto de los ticks. Se probó y funcionaba en un repro aislado con Playwright, pero en el navegador real del usuario el texto seguía negro en modo oscuro — la herencia de `color` vía `currentColor` hasta los `<text>` que genera Recharts internamente no es confiable en la práctica. La solución fue usar un color hexadecimal fijo (`AXIS_TEXT_COLOR = '#6b7280'`, gray-500) pasado directo a `stroke`/`fill`, sin depender de clases de Tailwind ni de `currentColor` dentro del SVG de Recharts. Cualquier texto/línea nuevo dentro de un gráfico de Recharts debe seguir este mismo patrón (color fijo, no `currentColor` + `dark:`).
+
+**Nota para el próximo agente (3):** en `ProgressPage`, el eje X del gráfico de `recharts` usa `entry.createdAt` (el timestamp ISO completo) como `dataKey`, **no** una fecha ya formateada tipo `"17/9"`. Motivo: si dos registros caen el mismo día, el string formateado se repite, y el eje categórico de Recharts trata valores de `dataKey` idénticos como la misma categoría — el tooltip terminaba mostrando siempre el primer punto sin importar dónde se posara el mouse (bug real, reproducido con Playwright barriendo el mouse sobre el gráfico). El formato bonito (`"17/9"`, `"17/9, 14:05"`) se aplica solo para mostrar, vía `tickFormatter` en `XAxis` y `labelFormatter` en `Tooltip` — nunca como el valor real del `dataKey`. Cualquier gráfico nuevo con eje temporal tiene que seguir el mismo patrón.
 
 ## Estado actual (mantener actualizado)
 
@@ -131,6 +139,16 @@ Fase 3 completada. Implementado:
 
 Probado de punta a punta con cámara real: escaneo de QR, formulario de log, y el último registro se muestra correctamente al volver a escanear la misma máquina.
 
-Sin pantalla de progreso ni contenido real en Home todavía — corresponde a la Fase 4.
+Fase 4 en curso. Implementado:
+- `lib/services/logEntries.ts`: agrega `getLogEntriesForMachine` (historial para el gráfico) y `getRecentLogEntries` (fetch crudo con el join a `machines`, sin dedupe). `lib/services/machines.ts`: agrega `getMachineById` y exporta `toMachine`/`MachineRow` (los usa `logEntries.ts` para el join).
+- `hooks/useMachineHistory.ts`, `hooks/useMachineById.ts` y `hooks/useRecentActivity.ts` (este último aplica la regla de negocio de dedupe por máquina — el fetch crudo lo hace el servicio, el "último registro por máquina" lo decide el hook).
+- `components/ui/Badge.tsx` y `components/MachineCard.tsx` — primer caso real de extracción de componente reutilizable (antes el badge estaba en línea en `LogPage` por regla de "no extraer hasta el 2do uso"; ahora se repite en `LogPage` y en la lista de Home).
+- `pages/HomePage.tsx` con contenido real (lista de actividad reciente + botón escanear) y `pages/ProgressPage.tsx` con gráfico de `recharts`. Ruta actualizada a `/progress/:machineId`.
 
-**Fase actual: Fase 4 — Progreso**, todavía no iniciada.
+Verificado con TypeScript/lint/`vite build` limpios, y con Playwright (montando las páginas fuera de los guards temporalmente) que Home y Progress no crashean en sus estados vacío/error.
+
+El usuario probó con datos reales y encontró dos bugs, ambos arreglados y confirmados: (1) el tooltip del gráfico siempre mostraba el mismo punto — el eje X usaba una fecha ya formateada como `dataKey` y dos registros el mismo día colisionaban en la misma categoría; se usa el timestamp completo como `dataKey` y se formatea solo para mostrar. (2) el texto de los ejes se veía negro en modo oscuro — `currentColor` + clases `dark:` de Tailwind no se heredaba de forma confiable hasta los `<text>` internos de Recharts; se usa un color hex fijo en su lugar (ver "Nota para el próximo agente (3)" y "(4)" arriba).
+
+Probado de punta a punta con datos reales: escaneo → log → actividad reciente en Home → gráfico de progreso con tooltip y colores correctos en claro y oscuro.
+
+**Fase actual: Fase 5 — Generación de QR físicos**, todavía no iniciada.

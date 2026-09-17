@@ -1,7 +1,7 @@
 import type { Machine } from '../../types/domain'
 import { supabase } from '../supabaseClient'
 
-interface MachineRow {
+export interface MachineRow {
   id: string
   name: string
   qr_code: string
@@ -9,7 +9,7 @@ interface MachineRow {
   created_at: string
 }
 
-function toMachine(row: MachineRow): Machine {
+export function toMachine(row: MachineRow): Machine {
   return {
     id: row.id,
     name: row.name,
@@ -25,6 +25,13 @@ export async function getMachineByQrCode(qrCode: string): Promise<Machine | null
     .select('*')
     .eq('qr_code', qrCode)
     .maybeSingle()
+
+  if (error) throw error
+  return data ? toMachine(data) : null
+}
+
+export async function getMachineById(id: string): Promise<Machine | null> {
+  const { data, error } = await supabase.from('machines').select('*').eq('id', id).maybeSingle()
 
   if (error) throw error
   return data ? toMachine(data) : null

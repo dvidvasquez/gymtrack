@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
@@ -95,11 +96,7 @@ export function LogPage() {
       <Card className="w-full max-w-md flex flex-col gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-medium text-gray-900 dark:text-gray-100">{machine.name}</h1>
-          {machine.muscleGroup && (
-            <span className="inline-flex w-fit items-center px-2.5 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
-              {machine.muscleGroup}
-            </span>
-          )}
+          {machine.muscleGroup && <Badge>{machine.muscleGroup}</Badge>}
         </div>
 
         <div className="flex flex-col gap-1">

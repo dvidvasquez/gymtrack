@@ -19,7 +19,7 @@ export function AppRouter() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/scan" element={<ScanPage />} />
           <Route path="/log/:qrCode" element={<LogPage />} />
-          <Route path="/progress" element={<ProgressPage />} />
+          <Route path="/progress/:machineId" element={<ProgressPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>

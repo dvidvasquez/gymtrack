@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react'
-import { getLastLogEntry } from '../lib/services/logEntries'
+import { getLogEntriesForMachine } from '../lib/services/logEntries'
 import type { LogEntry } from '../types/domain'
 
-interface UseLastEntryResult {
-  lastEntry: LogEntry | null
+interface UseMachineHistoryResult {
+  history: LogEntry[]
   loading: boolean
 }
 
-export function useLastEntry(machineId: string | null, userId: string | null): UseLastEntryResult {
-  const [lastEntry, setLastEntry] = useState<LogEntry | null>(null)
+export function useMachineHistory(
+  machineId: string | null,
+  userId: string | null,
+): UseMachineHistoryResult {
+  const [history, setHistory] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!machineId || !userId) {
-      setLastEntry(null)
+      setHistory([])
       setLoading(false)
       return
     }
@@ -21,15 +24,15 @@ export function useLastEntry(machineId: string | null, userId: string | null): U
     let cancelled = false
     setLoading(true)
 
-    getLastLogEntry(machineId, userId)
+    getLogEntriesForMachine(machineId, userId)
       .then((result) => {
         if (cancelled) return
-        setLastEntry(result)
+        setHistory(result)
         setLoading(false)
       })
       .catch(() => {
         if (cancelled) return
-        setLastEntry(null)
+        setHistory([])
         setLoading(false)
       })
 
@@ -38,5 +41,5 @@ export function useLastEntry(machineId: string | null, userId: string | null): U
     }
   }, [machineId, userId])
 
-  return { lastEntry, loading }
+  return { history, loading }
 }
