@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import type { Location } from 'react-router-dom'
 import { ProfileForm } from '../components/ProfileForm'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -8,13 +9,21 @@ import { isProfileComplete, useProfile } from '../hooks/useProfile'
 
 const ONBOARDING_FORM_ID = 'onboarding-form'
 
+interface OnboardingLocationState {
+  from?: Location
+}
+
 export function OnboardingPage() {
   const { user } = useAuth()
   const { profile, loading, saveProfileDetails } = useProfile(user?.id ?? null)
   const navigate = useNavigate()
+  const location = useLocation()
   const [submitting, setSubmitting] = useState(false)
 
-  if (isProfileComplete(profile)) return <Navigate to="/home" replace />
+  const from = (location.state as OnboardingLocationState | null)?.from
+  const destination = from ? `${from.pathname}${from.search}` : '/home'
+
+  if (isProfileComplete(profile)) return <Navigate to={destination} replace />
 
   if (loading) {
     return (
@@ -48,7 +57,7 @@ export function OnboardingPage() {
               setSubmitting(false)
             }
           }}
-          onSuccess={() => navigate('/home', { viewTransition: true })}
+          onSuccess={() => navigate(destination, { viewTransition: true })}
         />
 
         <Button type="submit" form={ONBOARDING_FORM_ID} disabled={submitting}>

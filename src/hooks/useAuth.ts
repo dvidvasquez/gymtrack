@@ -10,7 +10,7 @@ import {
 interface UseAuthResult {
   user: User | null
   loading: boolean
-  signInWithGoogle: () => Promise<void>
+  signInWithGoogle: (redirectPath?: string) => Promise<void>
   signOut: () => Promise<void>
 }
 

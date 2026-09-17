@@ -1,10 +1,10 @@
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../supabaseClient'
 
-export async function signInWithGoogle(): Promise<void> {
+export async function signInWithGoogle(redirectPath: string = '/home'): Promise<void> {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin },
+    options: { redirectTo: `${window.location.origin}${redirectPath}` },
   })
   if (error) throw error
 }
