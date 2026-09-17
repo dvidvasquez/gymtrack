@@ -18,7 +18,7 @@ export function AppRouter() {
         <Route element={<RequireProfile />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/scan" element={<ScanPage />} />
-          <Route path="/log" element={<LogPage />} />
+          <Route path="/log/:qrCode" element={<LogPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
