@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+/* Transición entre páginas (react-router `viewTransition`, ver AppShell y
+   navegaciones con `viewTransition`). Se sobreescribe el cross-fade por
+   defecto del navegador con uno más corto y consistente con el resto de
+   la UI. Navegadores sin soporte simplemente no animan — no rompe nada. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+  animation-timing-function: ease-out;
+}
+
+::view-transition-old(root) {
+  animation-name: gt-fade-out;
+}
+
+::view-transition-new(root) {
+  animation-name: gt-fade-in;
+}
+
+@keyframes gt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes gt-fade-in {
+  from {
+    opacity: 0;
+  }
+}

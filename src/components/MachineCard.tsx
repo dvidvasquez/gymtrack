@@ -10,7 +10,7 @@ interface MachineCardProps {
 
 export function MachineCard({ machine, lastEntry }: MachineCardProps) {
   return (
-    <Link to={`/progress/${machine.id}`}>
+    <Link to={`/progress/${machine.id}`} viewTransition>
       <Card className="flex flex-col gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">{machine.name}</h2>

@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { AppShell } from '../components/AppShell'
 import { RequireAuth } from '../components/RequireAuth'
 import { RequireProfile } from '../components/RequireProfile'
 import { HomePage } from '../pages/HomePage'
@@ -16,11 +17,13 @@ export function AppRouter() {
       <Route element={<RequireAuth />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route element={<RequireProfile />}>
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/scan" element={<ScanPage />} />
-          <Route path="/log/:qrCode" element={<LogPage />} />
-          <Route path="/progress/:machineId" element={<ProgressPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route element={<AppShell />}>
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/scan" element={<ScanPage />} />
+            <Route path="/log/:qrCode" element={<LogPage />} />
+            <Route path="/progress/:machineId" element={<ProgressPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
         </Route>
       </Route>
       <Route path="/" element={<Navigate to="/home" replace />} />

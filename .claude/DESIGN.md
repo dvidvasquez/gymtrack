@@ -22,12 +22,16 @@ Set reducido, usando tokens estándar de Tailwind (sin custom theme):
 | Borde | `border-gray-200` | `dark:border-gray-800` |
 | Texto principal | `text-gray-900` | `dark:text-gray-100` |
 | Texto secundario | `text-gray-500` | `dark:text-gray-400` |
-| Acento (interactivo / estado activo) | `blue-600` (`bg-blue-600` / `text-blue-600`) | `dark:blue-500` |
-| Acento hover | `blue-700` | `dark:blue-400` |
+| Fondo de botón primario | `red-500` (hover: `red-600`) | igual en oscuro |
+| Acento de texto/badge (interactivo / estado activo) | `red-600` (`text-red-600`) | `dark:red-500` |
+| Anillo de foco (inputs, botones, ícono de menú) | `gray-400` | `dark:gray-600` |
+
+El rojo del acento sale de la identidad del gimnasio (logo de Full Trainer Gym: rojo sobre negro) — `red-500`/`red-600` de Tailwind, no un hex inventado. El fondo de los botones usa `red-500` (más suave) en vez de `red-600` a propósito — probado y ajustado a pedido del usuario, `red-600` se sentía muy intenso para un fondo sólido grande.
 
 Reglas:
-- El azul es el **único** color de acento. No mezclar con verde, morado, naranja, etc. para indicar "interactivo" o "activo".
-- Colores semánticos (error, éxito) se usan solo cuando son estrictamente necesarios (ej. validación de formulario) — `red-600` para error, nada más por ahora. No agregar una paleta semántica completa sin necesidad concreta.
+- El rojo es el **único** color de acento. No mezclar con azul, verde, morado, naranja, etc. para indicar "interactivo" o "activo".
+- **El foco (`:focus`) no usa el color de acento.** Inputs, botones y el ícono de menú muestran un anillo gris neutro (`ring-gray-400` / `dark:ring-gray-600`), no rojo — decisión explícita del usuario. Los inputs tampoco cambian el color del borde al enfocarse, solo aparece el anillo.
+- Colores semánticos (error, éxito) se usan solo cuando son estrictamente necesarios (ej. validación de formulario, confirmación de guardado) — **`amber-600` para error** (no `red-600`: como el rojo ya es el acento de marca, un error en rojo se mezclaría visualmente con botones/estados activos y perdería la señal de alerta) y **`green-600`/`bg-green-50 dark:bg-green-950` para éxito** (banner de confirmación, ej. "registro guardado" en Home). No agregar una paleta semántica completa sin necesidad concreta — solo error y éxito, nada de "info"/"warning" separados.
 - Modo oscuro: soportarlo con el prefijo `dark:` de Tailwind desde que se cree cada componente, aunque el toggle de tema no esté implementado todavía — así no hay que retocar cada pantalla después.
 
 ## 3. Tipografía
@@ -48,7 +52,7 @@ Estos patrones deben vivir como componentes reutilizables en `src/components/ui/
 ### Botón primario
 
 ```tsx
-<button className="w-full h-11 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition-colors">
+<button className="w-full h-11 px-4 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:ring-offset-2 transition-colors">
   Guardar
 </button>
 ```
@@ -56,7 +60,7 @@ Estos patrones deben vivir como componentes reutilizables en `src/components/ui/
 ### Botón secundario
 
 ```tsx
-<button className="w-full h-11 px-4 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100 font-medium hover:bg-gray-50 dark:hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 transition-colors">
+<button className="w-full h-11 px-4 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100 font-medium hover:bg-gray-50 dark:hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:ring-offset-2 transition-colors">
   Cancelar
 </button>
 ```
@@ -66,7 +70,7 @@ Estos patrones deben vivir como componentes reutilizables en `src/components/ui/
 ```tsx
 <input
   type="number"
-  className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+  className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
   placeholder="Peso (kg)"
 />
 ```
@@ -82,7 +86,7 @@ Estos patrones deben vivir como componentes reutilizables en `src/components/ui/
 ### Badge / etiqueta pequeña (ej. grupo muscular)
 
 ```tsx
-<span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
+<span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400">
   Pecho
 </span>
 ```
@@ -105,7 +109,7 @@ Usar siempre la escala de Tailwind, nunca valores arbitrarios (`p-[13px]`, `gap-
 ## 7. Qué evitar explícitamente
 
 - Iconos filled (solo outline, ver sección 5).
-- Múltiples colores de acento mezclados — solo azul.
+- Múltiples colores de acento mezclados — solo rojo.
 - Sombras pronunciadas (`shadow-lg`, `shadow-xl`) — como mucho `shadow-sm` si hace falta una separación sutil, y solo con justificación concreta.
 - Texto en mayúsculas para títulos (`uppercase`).
 - Bordes redondeados exagerados tipo "pill" (`rounded-full`) salvo en badges.

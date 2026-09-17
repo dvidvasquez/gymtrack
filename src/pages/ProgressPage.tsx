@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import {
   CartesianGrid,
   Line,
@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { Button } from '../components/ui/Button'
+import { useFooterAction } from '../components/FooterActionContext'
 import { Card } from '../components/ui/Card'
 import { useAuth } from '../hooks/useAuth'
 import { useMachineById } from '../hooks/useMachineById'
@@ -21,6 +21,10 @@ import { useMachineHistory } from '../hooks/useMachineHistory'
 // negros en modo oscuro). #6b7280 tiene contraste aceptable tanto sobre
 // la card blanca como sobre la card oscura, sin depender de esa herencia.
 const AXIS_TEXT_COLOR = '#6b7280'
+
+// red-600 (color de acento de la app, ver DESIGN.md) en hex: Recharts no
+// resuelve clases de Tailwind en `stroke`, necesita el valor literal.
+const LINE_COLOR = '#dc2626'
 
 function formatAxisDate(value: string) {
   return new Date(value).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
@@ -42,26 +46,23 @@ export function ProgressPage() {
   const { machine, loading: machineLoading } = useMachineById(machineId)
   const { history, loading: historyLoading } = useMachineHistory(machineId, user?.id ?? null)
 
+  useFooterAction(
+    machine
+      ? { kind: 'add', to: `/log/${machine.qrCode}`, label: 'Agregar registro' }
+      : null,
+  )
+
   if (machineLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
-        <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
-      </div>
-    )
+    return <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
   }
 
   if (!machine) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
-        <Card className="w-full max-w-md flex flex-col items-center gap-4 text-center">
-          <p className="text-base font-normal text-gray-700 dark:text-gray-300">
-            No encontramos esa máquina.
-          </p>
-          <Link to="/home" className="w-full">
-            <Button variant="secondary">Volver a Home</Button>
-          </Link>
-        </Card>
-      </div>
+      <Card className="flex flex-col items-center gap-4 text-center">
+        <p className="text-base font-normal text-gray-700 dark:text-gray-300">
+          No encontramos esa máquina.
+        </p>
+      </Card>
     )
   }
 
@@ -75,51 +76,45 @@ export function ProgressPage() {
   }))
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-6">
-      <div className="max-w-md mx-auto flex flex-col gap-6">
-        <h1 className="text-2xl font-medium text-gray-900 dark:text-gray-100">{machine.name}</h1>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-medium text-gray-900 dark:text-gray-100">{machine.name}</h1>
 
-        <Card>
-          {historyLoading ? (
-            <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
-          ) : chartData.length === 0 ? (
-            <p className="text-base font-normal text-gray-500 dark:text-gray-400">
-              Todavía no hay registros para graficar.
-            </p>
-          ) : (
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-gray-200 dark:stroke-gray-800"
-                  />
-                  <XAxis
-                    dataKey="createdAt"
-                    tickFormatter={formatAxisDate}
-                    tick={{ fontSize: 12, fill: AXIS_TEXT_COLOR }}
-                    stroke={AXIS_TEXT_COLOR}
-                  />
-                  <YAxis tick={{ fontSize: 12, fill: AXIS_TEXT_COLOR }} stroke={AXIS_TEXT_COLOR} />
-                  <Tooltip labelFormatter={formatTooltipDate} />
-                  <Line
-                    type="monotone"
-                    dataKey="weightKg"
-                    name="Peso (kg)"
-                    stroke="#2563eb"
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
-
-        <Link to="/home" className="w-full">
-          <Button variant="secondary">Volver a Home</Button>
-        </Link>
-      </div>
+      <Card>
+        {historyLoading ? (
+          <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
+        ) : chartData.length === 0 ? (
+          <p className="text-base font-normal text-gray-500 dark:text-gray-400">
+            Todavía no hay registros para graficar.
+          </p>
+        ) : (
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-gray-200 dark:stroke-gray-800"
+                />
+                <XAxis
+                  dataKey="createdAt"
+                  tickFormatter={formatAxisDate}
+                  tick={{ fontSize: 12, fill: AXIS_TEXT_COLOR }}
+                  stroke={AXIS_TEXT_COLOR}
+                />
+                <YAxis tick={{ fontSize: 12, fill: AXIS_TEXT_COLOR }} stroke={AXIS_TEXT_COLOR} />
+                <Tooltip labelFormatter={formatTooltipDate} />
+                <Line
+                  type="monotone"
+                  dataKey="weightKg"
+                  name="Peso (kg)"
+                  stroke={LINE_COLOR}
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </Card>
     </div>
   )
 }

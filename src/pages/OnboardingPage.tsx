@@ -54,7 +54,7 @@ export function OnboardingPage() {
               required
             />
           </div>
-          {error && <p className="text-sm font-normal text-red-600">{error}</p>}
+          {error && <p className="text-sm font-normal text-amber-600">{error}</p>}
           <Button type="submit" disabled={submitting}>
             {submitting ? 'Guardando...' : 'Continuar'}
           </Button>
