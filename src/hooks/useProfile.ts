@@ -21,6 +21,13 @@ export function isProfileComplete(profile: Profile | null): boolean {
   )
 }
 
+// El rol se otorga a mano (SQL directo), nunca autootorgado al loguearse —
+// ver migración 20260918000000_exercises_and_roles.sql. Solo un 'owner'
+// puede crear/editar/borrar ejercicios del catálogo compartido.
+export function isOwner(profile: Profile | null): boolean {
+  return profile?.role === 'owner'
+}
+
 interface UseProfileResult {
   profile: Profile | null
   loading: boolean

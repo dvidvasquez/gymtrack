@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react'
-import { getMachineByQrCode } from '../lib/services/machines'
-import type { Machine } from '../types/domain'
+import { getExerciseByQrCode } from '../lib/services/exercises'
+import type { Exercise } from '../types/domain'
 
-interface UseMachineResult {
-  machine: Machine | null
+interface UseExerciseByQrCodeResult {
+  exercise: Exercise | null
   loading: boolean
   error: string | null
 }
 
-export function useMachine(qrCode: string): UseMachineResult {
-  const [machine, setMachine] = useState<Machine | null>(null)
+export function useExerciseByQrCode(qrCode: string): UseExerciseByQrCodeResult {
+  const [exercise, setExercise] = useState<Exercise | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!qrCode) {
-      setMachine(null)
+      setExercise(null)
       setLoading(false)
       setError(null)
       return
@@ -25,15 +25,15 @@ export function useMachine(qrCode: string): UseMachineResult {
     setLoading(true)
     setError(null)
 
-    getMachineByQrCode(qrCode)
+    getExerciseByQrCode(qrCode)
       .then((result) => {
         if (cancelled) return
-        setMachine(result)
+        setExercise(result)
         setLoading(false)
       })
       .catch((err) => {
         if (cancelled) return
-        setError(err instanceof Error ? err.message : 'No se pudo buscar la máquina')
+        setError(err instanceof Error ? err.message : 'No se pudo buscar el ejercicio')
         setLoading(false)
       })
 
@@ -42,5 +42,5 @@ export function useMachine(qrCode: string): UseMachineResult {
     }
   }, [qrCode])
 
-  return { machine, loading, error }
+  return { exercise, loading, error }
 }

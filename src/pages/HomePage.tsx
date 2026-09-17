@@ -1,7 +1,7 @@
 import { IconCircleCheck } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { MachineCard } from '../components/MachineCard'
+import { ExerciseCard } from '../components/ExerciseCard'
 import { useAuth } from '../hooks/useAuth'
 import { useRecentActivity } from '../hooks/useRecentActivity'
 
@@ -53,8 +53,8 @@ export function HomePage() {
         </p>
       ) : (
         <div className="flex flex-col gap-3">
-          {activity.map(({ machine, lastEntry }) => (
-            <MachineCard key={machine.id} machine={machine} lastEntry={lastEntry} />
+          {activity.map(({ exercise, lastEntry }) => (
+            <ExerciseCard key={exercise.id} exercise={exercise} lastEntry={lastEntry} />
           ))}
         </div>
       )}

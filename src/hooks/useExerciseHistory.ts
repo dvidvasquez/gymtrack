@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react'
-import { getLogEntriesForMachine } from '../lib/services/logEntries'
+import { getLogEntriesForExercise } from '../lib/services/logEntries'
 import type { LogEntry } from '../types/domain'
 
-interface UseMachineHistoryResult {
+interface UseExerciseHistoryResult {
   history: LogEntry[]
   loading: boolean
 }
 
-export function useMachineHistory(
-  machineId: string | null,
+export function useExerciseHistory(
+  exerciseId: string | null,
   userId: string | null,
-): UseMachineHistoryResult {
+): UseExerciseHistoryResult {
   const [history, setHistory] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!machineId || !userId) {
+    if (!exerciseId || !userId) {
       setHistory([])
       setLoading(false)
       return
@@ -24,7 +24,7 @@ export function useMachineHistory(
     let cancelled = false
     setLoading(true)
 
-    getLogEntriesForMachine(machineId, userId)
+    getLogEntriesForExercise(exerciseId, userId)
       .then((result) => {
         if (cancelled) return
         setHistory(result)
@@ -39,7 +39,7 @@ export function useMachineHistory(
     return () => {
       cancelled = true
     }
-  }, [machineId, userId])
+  }, [exerciseId, userId])
 
   return { history, loading }
 }

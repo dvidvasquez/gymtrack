@@ -4,6 +4,8 @@
  * Si el esquema crece, considerar generarlos con `supabase gen types typescript`.
  */
 
+export type ProfileRole = 'owner' | 'member'
+
 export interface Profile {
   id: string
   userId: string
@@ -11,13 +13,18 @@ export interface Profile {
   weightKg: number | null
   heightCm: number | null
   birthDate: string | null
+  role: ProfileRole
   createdAt: string
 }
 
-export interface Machine {
+// qrCode es null para ejercicios sin equipamiento fijo (mancuernas, barra)
+// que no tienen un lugar donde pegar un QR físico y se eligen a mano desde
+// /exercises en vez de escanear. Cuando no es null, es el valor que codifica
+// el QR impreso (ver scripts/generate-qr-codes.mjs).
+export interface Exercise {
   id: string
   name: string
-  qrCode: string
+  qrCode: string | null
   muscleGroup: string | null
   createdAt: string
 }
@@ -25,7 +32,7 @@ export interface Machine {
 export interface LogEntry {
   id: string
   userId: string
-  machineId: string
+  exerciseId: string
   weightKg: number
   reps: number
   sets: number

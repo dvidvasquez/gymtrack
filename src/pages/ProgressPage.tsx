@@ -12,8 +12,8 @@ import {
 import { useFooterAction } from '../components/FooterActionContext'
 import { Card } from '../components/ui/Card'
 import { useAuth } from '../hooks/useAuth'
-import { useMachineById } from '../hooks/useMachineById'
-import { useMachineHistory } from '../hooks/useMachineHistory'
+import { useExerciseById } from '../hooks/useExerciseById'
+import { useExerciseHistory } from '../hooks/useExerciseHistory'
 
 // Gris fijo (Tailwind gray-500) en vez de `stroke="currentColor"` + clase
 // `dark:` de Tailwind: ese approach no se estaba heredando de forma
@@ -41,26 +41,26 @@ function formatTooltipDate(label: ReactNode) {
 }
 
 export function ProgressPage() {
-  const { machineId = '' } = useParams()
+  const { exerciseId = '' } = useParams()
   const { user } = useAuth()
-  const { machine, loading: machineLoading } = useMachineById(machineId)
-  const { history, loading: historyLoading } = useMachineHistory(machineId, user?.id ?? null)
+  const { exercise, loading: exerciseLoading } = useExerciseById(exerciseId)
+  const { history, loading: historyLoading } = useExerciseHistory(exerciseId, user?.id ?? null)
 
   useFooterAction(
-    machine
-      ? { kind: 'add', to: `/log/${machine.qrCode}`, label: 'Agregar registro' }
+    exercise
+      ? { kind: 'add', to: `/log/exercise/${exercise.id}`, label: 'Agregar registro' }
       : null,
   )
 
-  if (machineLoading) {
+  if (exerciseLoading) {
     return <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
   }
 
-  if (!machine) {
+  if (!exercise) {
     return (
       <Card className="flex flex-col items-center gap-4 text-center">
         <p className="text-base font-normal text-gray-700 dark:text-gray-300">
-          No encontramos esa máquina.
+          No encontramos ese ejercicio.
         </p>
       </Card>
     )
@@ -77,7 +77,7 @@ export function ProgressPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-medium text-gray-900 dark:text-gray-100">{machine.name}</h1>
+      <h1 className="text-2xl font-medium text-gray-900 dark:text-gray-100">{exercise.name}</h1>
 
       <Card>
         {historyLoading ? (

@@ -14,13 +14,13 @@ interface UseLogEntryResult {
   createEntry: (input: NewLogEntryInput) => Promise<LogEntry>
 }
 
-export function useLogEntry(machineId: string | null, userId: string | null): UseLogEntryResult {
+export function useLogEntry(exerciseId: string | null, userId: string | null): UseLogEntryResult {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const createEntry = useCallback(
     async (input: NewLogEntryInput) => {
-      if (!machineId || !userId) throw new Error('Falta la máquina o el usuario')
+      if (!exerciseId || !userId) throw new Error('Falta el ejercicio o el usuario')
 
       if (Number.isNaN(input.weightKg) || input.weightKg < 0) {
         throw new Error('El peso tiene que ser 0 o mayor')
@@ -36,7 +36,7 @@ export function useLogEntry(machineId: string | null, userId: string | null): Us
       setError(null)
       try {
         return await createLogEntry({
-          machineId,
+          exerciseId,
           userId,
           weightKg: input.weightKg,
           reps: input.reps,
@@ -51,7 +51,7 @@ export function useLogEntry(machineId: string | null, userId: string | null): Us
         setSaving(false)
       }
     },
-    [machineId, userId],
+    [exerciseId, userId],
   )
 
   return { saving, error, createEntry }

@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react'
-import { getRecentLogEntries, type LogEntryWithMachine } from '../lib/services/logEntries'
-import type { LogEntry, Machine } from '../types/domain'
+import { getRecentLogEntries, type LogEntryWithExercise } from '../lib/services/logEntries'
+import type { Exercise, LogEntry } from '../types/domain'
 
-export interface MachineActivity {
-  machine: Machine
+export interface ExerciseActivity {
+  exercise: Exercise
   lastEntry: LogEntry
 }
 
 interface UseRecentActivityResult {
-  activity: MachineActivity[]
+  activity: ExerciseActivity[]
   loading: boolean
 }
 
 export function useRecentActivity(userId: string | null): UseRecentActivityResult {
-  const [activity, setActivity] = useState<MachineActivity[]>([])
+  const [activity, setActivity] = useState<ExerciseActivity[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export function useRecentActivity(userId: string | null): UseRecentActivityResul
     getRecentLogEntries(userId)
       .then((entries) => {
         if (cancelled) return
-        setActivity(dedupeByMachine(entries))
+        setActivity(dedupeByExercise(entries))
         setLoading(false)
       })
       .catch(() => {
@@ -47,16 +47,16 @@ export function useRecentActivity(userId: string | null): UseRecentActivityResul
 }
 
 // Regla de negocio: la actividad reciente muestra el último registro por
-// máquina, no cada log individual — entries ya viene ordenado desc, así
-// que la primera aparición de cada machine_id es la más reciente.
-function dedupeByMachine(entries: LogEntryWithMachine[]): MachineActivity[] {
+// ejercicio, no cada log individual — entries ya viene ordenado desc, así
+// que la primera aparición de cada exercise_id es la más reciente.
+function dedupeByExercise(entries: LogEntryWithExercise[]): ExerciseActivity[] {
   const seen = new Set<string>()
-  const result: MachineActivity[] = []
+  const result: ExerciseActivity[] = []
 
-  for (const { logEntry, machine } of entries) {
-    if (seen.has(machine.id)) continue
-    seen.add(machine.id)
-    result.push({ machine, lastEntry: logEntry })
+  for (const { logEntry, exercise } of entries) {
+    if (seen.has(exercise.id)) continue
+    seen.add(exercise.id)
+    result.push({ exercise, lastEntry: logEntry })
   }
 
   return result

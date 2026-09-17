@@ -1,1 +1,1 @@
-export type { Profile, Machine, LogEntry } from './domain'
+export type { Profile, Exercise, LogEntry } from './domain'

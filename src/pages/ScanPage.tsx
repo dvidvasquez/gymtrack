@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQrScanner } from '../hooks/useQrScanner'
 
 const SCANNER_ELEMENT_ID = 'qr-scanner'
@@ -39,6 +39,12 @@ export function ScanPage() {
         className="w-full aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
       />
       {error && <p className="text-sm font-normal text-amber-600 text-center">{error}</p>}
+      <p className="text-sm font-normal text-gray-500 dark:text-gray-400 text-center">
+        ¿Mancuernas o barra sin QR?{' '}
+        <Link to="/exercises" viewTransition className="text-red-600 underline">
+          Elegí un ejercicio de la lista
+        </Link>
+      </p>
     </div>
   )
 }

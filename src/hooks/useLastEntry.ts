@@ -7,12 +7,12 @@ interface UseLastEntryResult {
   loading: boolean
 }
 
-export function useLastEntry(machineId: string | null, userId: string | null): UseLastEntryResult {
+export function useLastEntry(exerciseId: string | null, userId: string | null): UseLastEntryResult {
   const [lastEntry, setLastEntry] = useState<LogEntry | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!machineId || !userId) {
+    if (!exerciseId || !userId) {
       setLastEntry(null)
       setLoading(false)
       return
@@ -21,7 +21,7 @@ export function useLastEntry(machineId: string | null, userId: string | null): U
     let cancelled = false
     setLoading(true)
 
-    getLastLogEntry(machineId, userId)
+    getLastLogEntry(exerciseId, userId)
       .then((result) => {
         if (cancelled) return
         setLastEntry(result)
@@ -36,7 +36,7 @@ export function useLastEntry(machineId: string | null, userId: string | null): U
     return () => {
       cancelled = true
     }
-  }, [machineId, userId])
+  }, [exerciseId, userId])
 
   return { lastEntry, loading }
 }

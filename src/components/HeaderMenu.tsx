@@ -1,4 +1,4 @@
-import { IconLogout, IconMenu2, IconUser } from '@tabler/icons-react'
+import { IconBarbell, IconLogout, IconMenu2, IconUser } from '@tabler/icons-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -49,6 +49,16 @@ export function HeaderMenu() {
           role="menu"
           className="absolute right-0 top-full mt-2 w-44 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 py-1 shadow-sm"
         >
+          <Link
+            to="/exercises"
+            viewTransition
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm font-normal text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            <IconBarbell size={18} stroke={2} />
+            Ejercicios
+          </Link>
           <Link
             to="/profile"
             viewTransition

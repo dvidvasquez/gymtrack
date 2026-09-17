@@ -1,10 +1,15 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { RequireAuth } from '../components/RequireAuth'
+import { RequireOwner } from '../components/RequireOwner'
 import { RequireProfile } from '../components/RequireProfile'
+import { EditExercisePage } from '../pages/EditExercisePage'
+import { ExercisesPage } from '../pages/ExercisesPage'
 import { HomePage } from '../pages/HomePage'
 import { LoginPage } from '../pages/LoginPage'
+import { LogByExercisePage } from '../pages/LogByExercisePage'
 import { LogPage } from '../pages/LogPage'
+import { NewExercisePage } from '../pages/NewExercisePage'
 import { OnboardingPage } from '../pages/OnboardingPage'
 import { ProfilePage } from '../pages/ProfilePage'
 import { ProgressPage } from '../pages/ProgressPage'
@@ -21,7 +26,13 @@ export function AppRouter() {
             <Route path="/home" element={<HomePage />} />
             <Route path="/scan" element={<ScanPage />} />
             <Route path="/log/:qrCode" element={<LogPage />} />
-            <Route path="/progress/:machineId" element={<ProgressPage />} />
+            <Route path="/log/exercise/:exerciseId" element={<LogByExercisePage />} />
+            <Route path="/progress/:exerciseId" element={<ProgressPage />} />
+            <Route path="/exercises" element={<ExercisesPage />} />
+            <Route element={<RequireOwner />}>
+              <Route path="/exercises/new" element={<NewExercisePage />} />
+              <Route path="/exercises/:id/edit" element={<EditExercisePage />} />
+            </Route>
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
         </Route>

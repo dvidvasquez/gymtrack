@@ -8,6 +8,7 @@ interface ProfileRow {
   weight_kg: number | null
   height_cm: number | null
   birth_date: string | null
+  role: 'owner' | 'member'
   created_at: string
 }
 
@@ -19,6 +20,7 @@ function toProfile(row: ProfileRow): Profile {
     weightKg: row.weight_kg,
     heightCm: row.height_cm,
     birthDate: row.birth_date,
+    role: row.role,
     createdAt: row.created_at,
   }
 }

@@ -3,25 +3,27 @@ import { ExerciseLogForm } from '../components/ExerciseLogForm'
 import { useFooterAction } from '../components/FooterActionContext'
 import { Card } from '../components/ui/Card'
 import { useAuth } from '../hooks/useAuth'
-import { useExerciseByQrCode } from '../hooks/useExerciseByQrCode'
+import { useExerciseById } from '../hooks/useExerciseById'
 import { useLastEntry } from '../hooks/useLastEntry'
 import { useLogEntry } from '../hooks/useLogEntry'
 
 const LOG_FORM_ID = 'log-form'
 
-export function LogPage() {
-  const { qrCode = '' } = useParams()
+// Segundo entry point al mismo flujo de registro que LogPage (ver
+// components/ExerciseLogForm), para cuando el ejercicio se elige a mano
+// desde /exercises en vez de escanear un QR — típicamente mancuernas o
+// barra, que no tienen un lugar fijo donde pegar un código.
+export function LogByExercisePage() {
+  const { exerciseId = '' } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { exercise, loading: exerciseLoading } = useExerciseByQrCode(qrCode)
+  const { exercise, loading: exerciseLoading } = useExerciseById(exerciseId)
   const { lastEntry, loading: lastEntryLoading } = useLastEntry(
     exercise?.id ?? null,
     user?.id ?? null,
   )
   const { createEntry, saving } = useLogEntry(exercise?.id ?? null, user?.id ?? null)
 
-  // El botón de guardar vive en el footer de AppShell (ver AppShell /
-  // FooterActionContext), no acá — así la página tiene un solo botón.
   useFooterAction(
     exercise ? { kind: 'save', formId: LOG_FORM_ID, label: 'Guardar registro', disabled: saving } : null,
   )
@@ -38,7 +40,7 @@ export function LogPage() {
     return (
       <Card className="flex flex-col items-center gap-4 text-center">
         <p className="text-base font-normal text-gray-700 dark:text-gray-300">
-          No encontramos ningún ejercicio con ese código QR.
+          No encontramos ese ejercicio.
         </p>
       </Card>
     )

@@ -1,11 +1,11 @@
-import type { LogEntry, Machine } from '../../types/domain'
+import type { Exercise, LogEntry } from '../../types/domain'
 import { supabase } from '../supabaseClient'
-import { toMachine, type MachineRow } from './machines'
+import { toExercise, type ExerciseRow } from './exercises'
 
 interface LogEntryRow {
   id: string
   user_id: string
-  machine_id: string
+  exercise_id: string
   weight_kg: number
   reps: number
   sets: number
@@ -17,7 +17,7 @@ function toLogEntry(row: LogEntryRow): LogEntry {
   return {
     id: row.id,
     userId: row.user_id,
-    machineId: row.machine_id,
+    exerciseId: row.exercise_id,
     weightKg: row.weight_kg,
     reps: row.reps,
     sets: row.sets,
@@ -27,13 +27,13 @@ function toLogEntry(row: LogEntryRow): LogEntry {
 }
 
 export async function getLastLogEntry(
-  machineId: string,
+  exerciseId: string,
   userId: string,
 ): Promise<LogEntry | null> {
   const { data, error } = await supabase
     .from('log_entries')
     .select('*')
-    .eq('machine_id', machineId)
+    .eq('exercise_id', exerciseId)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -45,7 +45,7 @@ export async function getLastLogEntry(
 
 interface CreateLogEntryInput {
   userId: string
-  machineId: string
+  exerciseId: string
   weightKg: number
   reps: number
   sets: number
@@ -57,7 +57,7 @@ export async function createLogEntry(input: CreateLogEntryInput): Promise<LogEnt
     .from('log_entries')
     .insert({
       user_id: input.userId,
-      machine_id: input.machineId,
+      exercise_id: input.exerciseId,
       weight_kg: input.weightKg,
       reps: input.reps,
       sets: input.sets,
@@ -70,14 +70,14 @@ export async function createLogEntry(input: CreateLogEntryInput): Promise<LogEnt
   return toLogEntry(data)
 }
 
-export async function getLogEntriesForMachine(
-  machineId: string,
+export async function getLogEntriesForExercise(
+  exerciseId: string,
   userId: string,
 ): Promise<LogEntry[]> {
   const { data, error } = await supabase
     .from('log_entries')
     .select('*')
-    .eq('machine_id', machineId)
+    .eq('exercise_id', exerciseId)
     .eq('user_id', userId)
     .order('created_at', { ascending: true })
 
@@ -85,32 +85,32 @@ export async function getLogEntriesForMachine(
   return (data ?? []).map(toLogEntry)
 }
 
-export interface LogEntryWithMachine {
+export interface LogEntryWithExercise {
   logEntry: LogEntry
-  machine: Machine
+  exercise: Exercise
 }
 
-interface LogEntryWithMachineRow extends LogEntryRow {
-  machines: MachineRow | null
+interface LogEntryWithExerciseRow extends LogEntryRow {
+  exercises: ExerciseRow | null
 }
 
 export async function getRecentLogEntries(
   userId: string,
   limit = 50,
-): Promise<LogEntryWithMachine[]> {
+): Promise<LogEntryWithExercise[]> {
   const { data, error } = await supabase
     .from('log_entries')
-    .select('*, machines(*)')
+    .select('*, exercises(*)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit)
 
   if (error) throw error
 
-  return ((data ?? []) as LogEntryWithMachineRow[])
-    .filter((row) => row.machines !== null)
+  return ((data ?? []) as LogEntryWithExerciseRow[])
+    .filter((row) => row.exercises !== null)
     .map((row) => ({
       logEntry: toLogEntry(row),
-      machine: toMachine(row.machines as MachineRow),
+      exercise: toExercise(row.exercises as ExerciseRow),
     }))
 }
