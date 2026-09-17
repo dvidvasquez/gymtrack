@@ -92,7 +92,7 @@ Este proyecto avanza en fases secuenciales. Cada fase tiene un estado (COMPLETAD
 - **Fase 4 — Progreso (COMPLETADA):** pantalla de progreso por máquina con gráfico, pantalla Home con resumen básico.
 - **Fase 5 — Generación de QR físicos (COMPLETADA):** script para exportar un PNG de QR por cada máquina, para imprimir.
 - **Fase 6 — Perfil extendido (COMPLETADA):** agregar peso, estatura y fecha de nacimiento al perfil del usuario — se piden al iniciar sesión si todavía no los tiene (una sola vez), y se pueden ver/editar después desde una pantalla de Perfil real, accesible desde el menú hamburguesa. Pensado para más adelante generar informes cruzando esta info con los registros de la app.
-- **Fase 7 — Demo:** deploy en Vercel, prueba end-to-end antes de mostrárselo al dueño del gimnasio.
+- **Fase 7 — Demo (COMPLETADA):** deploy en Vercel, prueba end-to-end antes de mostrárselo al dueño del gimnasio.
 - **Fase 8 (futura, no MVP) — Offline-first:** guardado local con IndexedDB y sincronización en segundo plano cuando el usuario recupera conexión. No implementar hasta que se indique explícitamente.
 
 **Regla importante:** en cada sesión, trabajar únicamente en la fase que el usuario indique como "actual" (ver "Estado actual" abajo). Si una tarea pedida pertenece a una fase posterior a la actual, señalarlo y preguntar si se quiere adelantar, en vez de hacerla directamente.
@@ -194,13 +194,12 @@ Verificado con TypeScript/lint/`vite build` limpios, y con Playwright: el formul
 
 Probado de punta a punta por el usuario con sesión real: pide los datos faltantes al iniciar sesión y se pueden editar después desde el menú → Perfil.
 
-## Plan para Fase 7 — Demo
+## Fase 7 — Demo (completada)
 
-1. **`vercel.json` agregado** (rewrite de SPA: todas las rutas sirven `index.html`, sino refrescar en `/home` o cualquier ruta que no sea `/` da 404 en Vercel). Ya en el repo.
-2. **Conectar el repo a Vercel** (requiere la cuenta del usuario, no se puede hacer desde acá): importar `dvidvasquez/gymtrack` desde GitHub en Vercel — detecta Vite automáticamente (build `vite build`, output `dist`). Configurar ahí las env vars `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (mismos valores que el `.env` local).
-3. **Una vez desplegado, actualizar con la URL real de producción:**
-   - Supabase → Authentication → URL Configuration: agregar la URL de Vercel a Site URL / Redirect URLs (hoy solo tiene `localhost:5173`).
-   - Google Cloud Console → credencial OAuth → Authorized JavaScript origins: agregar la misma URL.
-4. **Prueba end-to-end en producción**: login con Google, completar/editar perfil, escanear QR, guardar registro, ver progreso, cerrar sesión.
+Deploy en Vercel: **https://gym-full-tracker.vercel.app/**. `vercel.json` con rewrite de SPA (todas las rutas sirven `index.html`). Env vars `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` configuradas en el proyecto de Vercel. Actualizado con la URL real de producción: Supabase (Authentication → URL Configuration → Site URL / Redirect URLs) y Google Cloud Console (credencial OAuth → Authorized JavaScript origins) — ambos ahora tienen tanto `localhost:5173` (dev) como el dominio de Vercel (prod).
 
-**Fase actual: Fase 7 — Demo**, todavía no iniciada.
+Probado de punta a punta en producción por el usuario: login con Google, perfil, escaneo de QR, registro, progreso — todo funciona.
+
+**Todas las fases del MVP (0 a 7) están completas.** Solo queda la Fase 8 (Offline-first), marcada explícitamente como "futura, no MVP" — no se implementa hasta que el usuario lo pida.
+
+**Fase actual: ninguna — MVP completo (Fases 0–7).** La Fase 8 (Offline-first) es futura y no se arranca sin pedido explícito del usuario; no asumir que "seguir con la siguiente fase" significa esa.
