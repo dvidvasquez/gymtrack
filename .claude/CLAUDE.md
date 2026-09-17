@@ -91,7 +91,7 @@ Este proyecto avanza en fases secuenciales. Cada fase tiene un estado (COMPLETAD
 - **Fase 3 — Escaneo y registro (COMPLETADA):** integrar lectura de QR con la cámara, mostrar el último registro de esa máquina, formulario para guardar un log nuevo.
 - **Fase 4 — Progreso (COMPLETADA):** pantalla de progreso por máquina con gráfico, pantalla Home con resumen básico.
 - **Fase 5 — Generación de QR físicos (COMPLETADA):** script para exportar un PNG de QR por cada máquina, para imprimir.
-- **Fase 6 — Perfil extendido (EN CURSO):** agregar peso, estatura y fecha de nacimiento al perfil del usuario — se piden al iniciar sesión si todavía no los tiene (una sola vez), y se pueden ver/editar después desde una pantalla de Perfil real, accesible desde el menú hamburguesa. Pensado para más adelante generar informes cruzando esta info con los registros de la app.
+- **Fase 6 — Perfil extendido (COMPLETADA):** agregar peso, estatura y fecha de nacimiento al perfil del usuario — se piden al iniciar sesión si todavía no los tiene (una sola vez), y se pueden ver/editar después desde una pantalla de Perfil real, accesible desde el menú hamburguesa. Pensado para más adelante generar informes cruzando esta info con los registros de la app.
 - **Fase 7 — Demo:** deploy en Vercel, prueba end-to-end antes de mostrárselo al dueño del gimnasio.
 - **Fase 8 (futura, no MVP) — Offline-first:** guardado local con IndexedDB y sincronización en segundo plano cuando el usuario recupera conexión. No implementar hasta que se indique explícitamente.
 
@@ -192,4 +192,6 @@ Objetivo: agregar peso, estatura y fecha de nacimiento al perfil, pedidos una so
 
 Verificado con TypeScript/lint/`vite build` limpios, y con Playwright: el formulario completo renderiza bien en Onboarding y en Profile (con el footer mostrando el ícono de guardar), el menú muestra "Perfil", y confirmé que el botón del footer efectivamente dispara el submit del formulario real de `ProfilePage` (sin sesión real esto termina en el error esperado "No hay usuario autenticado", mostrado inline — no un submit de página completa). **Falta la prueba end-to-end con una sesión real**: completar el perfil desde `/onboarding` (usuario nuevo) y desde `/profile` con un perfil ya completo (edición).
 
-**Fase actual: Fase 6 — Perfil extendido**, pendiente de prueba manual con sesión real.
+Probado de punta a punta por el usuario con sesión real: pide los datos faltantes al iniciar sesión y se pueden editar después desde el menú → Perfil.
+
+**Fase actual: Fase 7 — Demo**, todavía no iniciada.
