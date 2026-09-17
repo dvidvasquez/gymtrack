@@ -1,22 +1,37 @@
-import { IconPencil, IconTrash } from '@tabler/icons-react'
+import { IconPencil, IconSearch, IconTrash } from '@tabler/icons-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFooterAction } from '../components/FooterActionContext'
 import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
+import { Input } from '../components/ui/Input'
 import { useAuth } from '../hooks/useAuth'
 import { useExercises } from '../hooks/useExercises'
 import { isOwner, useProfile } from '../hooks/useProfile'
+import type { Exercise } from '../types/domain'
+
+function matchesSearch(exercise: Exercise, query: string): boolean {
+  const normalized = query.trim().toLowerCase()
+  if (!normalized) return true
+  return (
+    exercise.name.toLowerCase().includes(normalized) ||
+    (exercise.muscleGroup?.toLowerCase().includes(normalized) ?? false)
+  )
+}
 
 export function ExercisesPage() {
   const { user } = useAuth()
   const { profile } = useProfile(user?.id ?? null)
   const { exercises, loading, error, removeExercise } = useExercises()
   const owner = isOwner(profile)
+  const [search, setSearch] = useState('')
 
   // Mismo patrón que ProgressPage: el botón de "+" vive en el footer de
   // AppShell, no inline en la página — para member (sin permiso de alta) cae
   // al default de AppShell (escanear).
   useFooterAction(owner ? { kind: 'add', to: '/exercises/new', label: 'Nuevo ejercicio' } : null)
+
+  const filteredExercises = exercises.filter((exercise) => matchesSearch(exercise, search))
 
   async function handleDelete(id: string, name: string) {
     if (!window.confirm(`¿Eliminar "${name}"? Esto no se puede deshacer.`)) return
@@ -31,6 +46,22 @@ export function ExercisesPage() {
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-medium text-gray-900 dark:text-gray-100">Ejercicios</h1>
 
+      <div className="relative">
+        <IconSearch
+          size={18}
+          stroke={2}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+        />
+        <Input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Buscar ejercicio..."
+          aria-label="Buscar ejercicio"
+          className="pl-10"
+        />
+      </div>
+
       {loading ? (
         <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
       ) : error ? (
@@ -39,9 +70,13 @@ export function ExercisesPage() {
         <p className="text-base font-normal text-gray-500 dark:text-gray-400">
           Todavía no hay ejercicios cargados.
         </p>
+      ) : filteredExercises.length === 0 ? (
+        <p className="text-base font-normal text-gray-500 dark:text-gray-400">
+          Ningún ejercicio coincide con "{search.trim()}".
+        </p>
       ) : (
         <div className="flex flex-col gap-3">
-          {exercises.map((exercise) => (
+          {filteredExercises.map((exercise) => (
             <Card key={exercise.id} className="flex items-center justify-between gap-2">
               <Link
                 to={`/log/exercise/${exercise.id}`}

@@ -7,12 +7,12 @@ import { createContext, useContext, useEffect } from 'react'
 // por ruta — así cada página decide su propia acción (y sus datos
 // dinámicos, como el qrCode de la máquina) sin que AppShell tenga que
 // duplicar esas consultas.
-export type FooterActionKind = 'scan' | 'add' | 'save'
+export type FooterActionKind = 'register' | 'add' | 'save'
 
 export interface FooterActionState {
   kind: FooterActionKind
   label: string
-  // 'scan' | 'add': navega a esta ruta.
+  // 'register' | 'add': navega a esta ruta.
   to?: string
   // 'save': dispara el submit del <form> con este id (puede estar en
   // otra parte del árbol — el atributo `form` de HTML no requiere que

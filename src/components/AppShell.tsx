@@ -1,4 +1,4 @@
-import { IconDeviceFloppy, IconPlus, IconQrcode } from '@tabler/icons-react'
+import { IconBarbell, IconDeviceFloppy, IconPlus } from '@tabler/icons-react'
 import { useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { FooterActionContext, type FooterActionKind, type FooterActionState } from './FooterActionContext'
@@ -7,13 +7,13 @@ import { Button } from './ui/Button'
 import { LinkButton } from './ui/LinkButton'
 
 const DEFAULT_ACTION: FooterActionState = {
-  kind: 'scan',
-  to: '/scan',
-  label: 'Escanear máquina',
+  kind: 'register',
+  to: '/log',
+  label: 'Registrar ejercicio',
 }
 
-const ICON_BY_KIND: Record<FooterActionKind, typeof IconQrcode> = {
-  scan: IconQrcode,
+const ICON_BY_KIND: Record<FooterActionKind, typeof IconBarbell> = {
+  register: IconBarbell,
   add: IconPlus,
   save: IconDeviceFloppy,
 }
@@ -23,8 +23,9 @@ const ICON_BY_KIND: Record<FooterActionKind, typeof IconQrcode> = {
 // footer fijo con una sola acción siempre disponible, para que ninguna
 // pantalla — ScanPage incluida — deje al usuario sin forma de volver al
 // inicio. Esa acción es dinámica según la página activa (ver
-// FooterActionContext / useFooterAction): por defecto es "escanear", pero
-// ProgressPage la cambia a "agregar registro" y LogPage a "guardar".
+// FooterActionContext / useFooterAction): por defecto lleva al selector
+// de método de registro (/log, ver LogEntryPage), pero ProgressPage la
+// cambia a "agregar registro" y LogPage/ProfilePage/etc. a "guardar".
 export function AppShell() {
   const [footerAction, setFooterAction] = useState<FooterActionState | null>(null)
   const action = footerAction ?? DEFAULT_ACTION
@@ -65,7 +66,7 @@ export function AppShell() {
             </Button>
           ) : (
             <LinkButton
-              to={action.to ?? '/scan'}
+              to={action.to ?? '/log'}
               viewTransition
               aria-label={action.label}
               className="flex items-center justify-center"

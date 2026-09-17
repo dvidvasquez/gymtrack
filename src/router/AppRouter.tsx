@@ -8,6 +8,7 @@ import { ExercisesPage } from '../pages/ExercisesPage'
 import { HomePage } from '../pages/HomePage'
 import { LoginPage } from '../pages/LoginPage'
 import { LogByExercisePage } from '../pages/LogByExercisePage'
+import { LogEntryPage } from '../pages/LogEntryPage'
 import { LogPage } from '../pages/LogPage'
 import { NewExercisePage } from '../pages/NewExercisePage'
 import { OnboardingPage } from '../pages/OnboardingPage'
@@ -24,6 +25,7 @@ export function AppRouter() {
         <Route element={<RequireProfile />}>
           <Route element={<AppShell />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/log" element={<LogEntryPage />} />
             <Route path="/scan" element={<ScanPage />} />
             <Route path="/log/:qrCode" element={<LogPage />} />
             <Route path="/log/exercise/:exerciseId" element={<LogByExercisePage />} />
