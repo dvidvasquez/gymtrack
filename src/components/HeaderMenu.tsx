@@ -1,12 +1,21 @@
-import { IconBarbell, IconLogout, IconMenu2, IconUser } from '@tabler/icons-react'
+import {
+  IconBarbell,
+  IconLogout,
+  IconMenu2,
+  IconMoon,
+  IconSun,
+  IconUser,
+} from '@tabler/icons-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../hooks/useTheme'
 
 // Menú hamburguesa del header: acciones/navegación globales que no ameritan
 // espacio permanente en el footer ni repetirse por página.
 export function HeaderMenu() {
   const { signOut } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -69,6 +78,22 @@ export function HeaderMenu() {
             <IconUser size={18} stroke={2} />
             Perfil
           </Link>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              toggleTheme()
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm font-normal text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            {theme === 'dark' ? (
+              <IconSun size={18} stroke={2} />
+            ) : (
+              <IconMoon size={18} stroke={2} />
+            )}
+            {theme === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+          </button>
           <button
             type="button"
             role="menuitem"

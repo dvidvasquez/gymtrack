@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Modo oscuro por clase (`.dark` en <html>), no por prefers-color-scheme:
+   así el usuario puede elegir el tema desde el menú. Quién pone la clase:
+   el script inline de index.html (antes de que cargue React, para que no
+   parpadee) y después hooks/useTheme.ts. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Transición entre páginas (react-router `viewTransition`, ver AppShell y
    navegaciones con `viewTransition`). Se sobreescribe el cross-fade por
    defecto del navegador con uno más corto y consistente con el resto de

@@ -29,6 +29,9 @@ export interface Exercise {
   createdAt: string
 }
 
+// Tema visual de la app, elegido desde el menú (ver hooks/useTheme.ts).
+export type Theme = 'light' | 'dark'
+
 // Unidad en la que el usuario *ingresa* el peso de un registro. Solo existe
 // en el front: `LogEntry.weightKg` (y la base) siempre están en kg — la
 // conversión la hace useLogEntry antes de guardar.

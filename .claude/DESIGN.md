@@ -32,7 +32,7 @@ Reglas:
 - El rojo es el **único** color de acento. No mezclar con azul, verde, morado, naranja, etc. para indicar "interactivo" o "activo".
 - **El foco (`:focus`) no usa el color de acento.** Inputs, botones y el ícono de menú muestran un anillo gris neutro (`ring-gray-400` / `dark:ring-gray-600`), no rojo — decisión explícita del usuario. Los inputs tampoco cambian el color del borde al enfocarse, solo aparece el anillo.
 - Colores semánticos (error, éxito) se usan solo cuando son estrictamente necesarios (ej. validación de formulario, confirmación de guardado) — **`amber-600` para error** (no `red-600`: como el rojo ya es el acento de marca, un error en rojo se mezclaría visualmente con botones/estados activos y perdería la señal de alerta) y **`green-600`/`bg-green-50 dark:bg-green-950` para éxito** (banner de confirmación, ej. "registro guardado" en Home). No agregar una paleta semántica completa sin necesidad concreta — solo error y éxito, nada de "info"/"warning" separados.
-- Modo oscuro: soportarlo con el prefijo `dark:` de Tailwind desde que se cree cada componente, aunque el toggle de tema no esté implementado todavía — así no hay que retocar cada pantalla después.
+- Modo oscuro: todo componente nuevo lleva sus variantes `dark:` de Tailwind desde el principio. El usuario elige el tema desde el menú (Tema claro / Tema oscuro); `dark:` se activa por la clase `.dark` en `<html>`, no por la preferencia del sistema (ver `src/index.css` y `hooks/useTheme.ts`), así que no hace falta nada especial por componente. Controles nativos (`<select>`, fecha) siguen el tema vía `color-scheme` en `<html>`.
 
 ## 3. Tipografía
 
