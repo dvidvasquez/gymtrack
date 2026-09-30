@@ -111,10 +111,10 @@ El proyecto avanza en fases secuenciales. **Regla importante:** en cada sesión,
 **Fases 0 a 9 completas**, probadas de punta a punta por el usuario en producción con datos reales. No hay fase "en curso": "seguir con la siguiente fase" **no** significa arrancar la Fase 10.
 
 Último checkpoint (revisión y endurecimiento, sin número de fase):
-- Migración `20260930000000_protect_profile_role.sql`: trigger que impide que un usuario se asigne `role` desde la app (ver "Decisiones vigentes"). Probada contra un Postgres 16 local con stubs de `auth`. **Pendiente de acción manual del usuario:** aplicarla en el SQL Editor de Supabase.
+- Migración `20260930000000_protect_profile_role.sql`: trigger que impide que un usuario se asigne `role` desde la app (ver "Decisiones vigentes"). Probada contra un Postgres 16 local con stubs de `auth` y **aplicada en el proyecto de Supabase de producción** (confirmado por el usuario: el trigger existe en `pg_trigger`).
 - `useProfile` distingue error de carga de "no tiene perfil" (`LoadErrorCard` con "Reintentar"); `useAuth` maneja el error de `getSession`; límites de perfil alineados con los `check` de la base; el peso del registro acepta pasos de 0.25 kg; `useExercises` reconoce errores de Postgres por código.
 - `ProgressPage` lista los registros debajo del gráfico y permite borrar uno (con confirmación).
-- Verificado con `tsc`, `oxlint`, `vite build` y Playwright (sesión simulada, ver "Notas para el próximo agente"). **Falta la prueba en dispositivo real** de lo anterior.
+- Verificado con `tsc`, `oxlint`, `vite build` y Playwright (sesión simulada, ver "Notas para el próximo agente"). Mergeado a `main` (PR #1) y desplegado por Vercel. **Falta la prueba en dispositivo real** (borrar un registro, guardar un peso con 0.25 kg).
 
 Pendientes conocidos, sin fase asignada (no implementar sin pedido):
 - `scripts/generate-qr-codes.mjs` tiene hardcodeadas las 3 máquinas de `supabase/seed.sql`; los ejercicios con QR creados desde la app no tienen forma de generar su PNG sin editar el script.
@@ -144,7 +144,7 @@ Guards anidados en `AppRouter.tsx`: `RequireAuth` (sin sesión → `/login`) →
 
 ### Base de datos
 
-- **SQL de esquema vive en `supabase/migrations/`, fuera de `src/`.** No hay Supabase CLI: los archivos `.sql` se pegan **en orden** en el SQL Editor del dashboard. `supabase/seed.sql` carga 3 máquinas de prueba.
+- **SQL de esquema vive en `supabase/migrations/`, fuera de `src/`.** No hay Supabase CLI: los archivos `.sql` se pegan **en orden** en el SQL Editor del dashboard. Antes de pegar, confirmar que el dashboard está en el proyecto de la app (el ref de `VITE_SUPABASE_URL`, que también aparece en la URL del dashboard) — un `relation "..." does not exist` casi siempre significa proyecto equivocado. Las migraciones nuevas califican los nombres con `public.` para no depender del `search_path` del editor. `supabase/seed.sql` carga 3 máquinas de prueba.
 - **`exercises` (antes `machines`) es un catálogo compartido, sin `user_id`.** Es equipamiento del gimnasio, no dato de cada usuario. Si en el futuro se soporta multi-gimnasio, necesita `user_id` y RLS por dueño — no implementar hasta que se pida.
 - **Un solo tipo `exercises` con `qr_code` nullable**, en vez de una tabla aparte para ejercicios sin QR. `qr_code = null` = se elige a mano desde `/exercises`; no-null = se escanea. Una tabla separada hubiera duplicado servicio/hooks/páginas y obligado a una FK polimórfica en `log_entries`, por una diferencia de una sola columna.
 - **`log_entries.exercise_id` es `on delete restrict`**: borrar un ejercicio con historial falla (y `useExercises.removeExercise` traduce el error a un mensaje legible) en vez de arrastrar los registros en cascada.
