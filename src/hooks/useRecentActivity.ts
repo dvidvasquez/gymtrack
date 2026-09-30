@@ -27,13 +27,17 @@ export function toLocalDayKey(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
+// Cuántos registros trae Home. Alcanza para varios días de entrenamiento
+// aun cargando cada serie por separado; es un solo fetch chico.
+const RECENT_ENTRIES_LIMIT = 200
+
 export function useRecentActivity(userId: string | null): UseRecentActivityResult {
-  const [activity, setActivity] = useState<ExerciseActivity[]>([])
+  const [days, setDays] = useState<ActivityDay[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!userId) {
-      setActivity([])
+      setDays([])
       setLoading(false)
       return
     }
@@ -41,15 +45,15 @@ export function useRecentActivity(userId: string | null): UseRecentActivityResul
     let cancelled = false
     setLoading(true)
 
-    getRecentLogEntries(userId)
+    getRecentLogEntries(userId, RECENT_ENTRIES_LIMIT)
       .then((entries) => {
         if (cancelled) return
-        setActivity(dedupeByExercise(entries))
+        setDays(groupByDay(entries, entries.length === RECENT_ENTRIES_LIMIT))
         setLoading(false)
       })
       .catch(() => {
         if (cancelled) return
-        setActivity([])
+        setDays([])
         setLoading(false)
       })
 
@@ -58,40 +62,38 @@ export function useRecentActivity(userId: string | null): UseRecentActivityResul
     }
   }, [userId])
 
-  return { days: groupByDay(activity), loading }
+  return { days, loading }
 }
 
-// La actividad ya viene ordenada de la más reciente a la más vieja, así que
-// los registros de un mismo día quedan consecutivos y alcanza con cortar
-// cada vez que cambia el día.
-function groupByDay(activity: ExerciseActivity[]): ActivityDay[] {
+// Regla de negocio: cada día muestra cada ejercicio que se hizo ese día una
+// sola vez, con su último registro *de ese día*. La deduplicación es por
+// (día, ejercicio), no global: si la extensión de tríceps se hizo el martes
+// y otra vez ayer, aparece en los dos días.
+//
+// `entries` viene ordenado del más nuevo al más viejo, así que los registros
+// de un mismo día son consecutivos y la primera aparición de un ejercicio
+// dentro de un día es la más reciente.
+//
+// Si el fetch llegó al límite (`truncated`), el día más viejo puede estar
+// cortado (algunos de sus registros quedaron afuera): se descarta en vez de
+// mostrarlo incompleto, salvo que sea el único día.
+function groupByDay(entries: LogEntryWithExercise[], truncated: boolean): ActivityDay[] {
   const days: ActivityDay[] = []
-
-  for (const item of activity) {
-    const day = toLocalDayKey(new Date(item.lastEntry.createdAt))
-    const current = days.at(-1)
-    if (current?.day === day) {
-      current.activity.push(item)
-    } else {
-      days.push({ day, activity: [item] })
-    }
-  }
-
-  return days
-}
-
-// Regla de negocio: la actividad reciente muestra el último registro por
-// ejercicio, no cada log individual — entries ya viene ordenado desc, así
-// que la primera aparición de cada exercise_id es la más reciente.
-function dedupeByExercise(entries: LogEntryWithExercise[]): ExerciseActivity[] {
-  const seen = new Set<string>()
-  const result: ExerciseActivity[] = []
+  let seenToday = new Set<string>()
 
   for (const { logEntry, exercise } of entries) {
-    if (seen.has(exercise.id)) continue
-    seen.add(exercise.id)
-    result.push({ exercise, lastEntry: logEntry })
+    const day = toLocalDayKey(new Date(logEntry.createdAt))
+    let current = days.at(-1)
+    if (current?.day !== day) {
+      current = { day, activity: [] }
+      days.push(current)
+      seenToday = new Set()
+    }
+    if (seenToday.has(exercise.id)) continue
+    seenToday.add(exercise.id)
+    current.activity.push({ exercise, lastEntry: logEntry })
   }
 
-  return result
+  if (truncated && days.length > 1) days.pop()
+  return days
 }
