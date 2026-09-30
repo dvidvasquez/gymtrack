@@ -1,6 +1,7 @@
 import { IconCircleCheck } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useFooterAction } from '../components/FooterActionContext'
+import { LoadErrorCard } from '../components/LoadErrorCard'
 import { ProfileForm } from '../components/ProfileForm'
 import { Card } from '../components/ui/Card'
 import { useAuth } from '../hooks/useAuth'
@@ -11,21 +12,23 @@ const SUCCESS_TIMEOUT_MS = 3000
 
 export function ProfilePage() {
   const { user } = useAuth()
-  const { profile, loading, saveProfileDetails } = useProfile(user?.id ?? null)
+  const { profile, loading, error, retry, saveProfileDetails } = useProfile(user?.id ?? null)
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
   // El botón de guardar vive en el footer de AppShell, igual que en LogPage.
-  useFooterAction({
-    kind: 'save',
-    formId: PROFILE_FORM_ID,
-    label: 'Guardar cambios',
-    disabled: saving,
-  })
+  // Sin perfil cargado no hay nada que guardar: cae al default de AppShell.
+  useFooterAction(
+    loading || error
+      ? null
+      : { kind: 'save', formId: PROFILE_FORM_ID, label: 'Guardar cambios', disabled: saving },
+  )
 
   if (loading) {
     return <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
   }
+
+  if (error) return <LoadErrorCard message={error} onRetry={retry} />
 
   return (
     <div className="flex flex-col gap-6">

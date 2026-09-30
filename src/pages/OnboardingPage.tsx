@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import type { Location } from 'react-router-dom'
+import { LoadErrorCard } from '../components/LoadErrorCard'
 import { ProfileForm } from '../components/ProfileForm'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
@@ -15,7 +16,7 @@ interface OnboardingLocationState {
 
 export function OnboardingPage() {
   const { user } = useAuth()
-  const { profile, loading, saveProfileDetails } = useProfile(user?.id ?? null)
+  const { profile, loading, error, retry, saveProfileDetails } = useProfile(user?.id ?? null)
   const navigate = useNavigate()
   const location = useLocation()
   const [submitting, setSubmitting] = useState(false)
@@ -29,6 +30,14 @@ export function OnboardingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
         <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+        <LoadErrorCard message={error} onRetry={retry} />
       </div>
     )
   }

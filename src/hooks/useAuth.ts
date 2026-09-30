@@ -19,10 +19,17 @@ export function useAuth(): UseAuthResult {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getSession().then((session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    getSession()
+      .then((session) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      })
+      .catch(() => {
+        // Sin sesión legible se trata como deslogueado (→ /login) en vez de
+        // dejar los guards en `loading` para siempre (pantalla en blanco).
+        setUser(null)
+        setLoading(false)
+      })
 
     return subscribeToAuthChanges((session) => {
       setUser(session?.user ?? null)
