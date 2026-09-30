@@ -10,7 +10,7 @@ Side project con dos objetivos: practicar el flujo de construir una app con ayud
 
 - **Login con Google** y perfil con nombre, peso, estatura y fecha de nacimiento (se piden una vez y se editan desde el menú → Perfil).
 - **Registrar un ejercicio:** el botón del footer ofrece escanear el QR de la máquina o elegir el ejercicio de la lista. Se muestra el último registro y se carga peso, repeticiones y series.
-- **Actividad reciente** en Home: último registro de cada ejercicio.
+- **Actividad reciente** en Home: último registro de cada ejercicio, agrupado por día (Hoy, Ayer, fecha).
 - **Progreso por ejercicio:** gráfico de peso en el tiempo y lista de registros (se puede borrar uno cargado por error).
 - **Catálogo de ejercicios** con búsqueda. Solo los usuarios con rol `owner` pueden crear, editar o borrar ejercicios; el rol se otorga a mano por SQL.
 - **QR imprimibles:** `npm run qr:generate` genera un PNG por máquina (la lista está en el script).

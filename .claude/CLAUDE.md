@@ -128,7 +128,7 @@ Pendientes conocidos, sin fase asignada (no implementar sin pedido):
 |---|---|---|
 | `/login` | `LoginPage` | Fuera de guards |
 | `/onboarding` | `OnboardingPage` | Requiere sesión; fuera de `AppShell` |
-| `/home` | `HomePage` | Actividad reciente (último registro por ejercicio) |
+| `/home` | `HomePage` | Actividad reciente (último registro por ejercicio), agrupada por día |
 | `/log` | `LogEntryPage` | Selector: "Escanear QR" (`/scan`) o "Elegir de la lista" (`/exercises`) |
 | `/scan` | `ScanPage` | Cámara; navega a `/log/:qrCode` |
 | `/log/:qrCode` | `LogPage` | Registro, entrando por QR |
@@ -161,6 +161,7 @@ Guards anidados en `AppRouter.tsx`: `RequireAuth` (sin sesión → `/login`) →
 - **`scripts/generate-qr-codes.mjs`** (`npm run qr:generate`) vive fuera de `src/` por ser tooling, igual que las migraciones. Genera PNG en `scripts/output/qr-codes/` (gitignorado). `APP_URL` y la lista de máquinas están hardcodeados a propósito: leer de Supabase requeriría la service role key para saltar RLS.
 - **Login preserva el destino a través del OAuth de Google.** `RequireAuth`/`RequireProfile` guardan la ruta original en `state: { from }`; `LoginPage` se la pasa a `signInWithGoogle(redirectPath)`, que arma `redirectTo = origin + redirectPath` (el `state` de React Router no sobrevive al redirect de página completa). `OnboardingPage` también respeta `from`. Requiere que Supabase (Authentication → URL Configuration → Redirect URLs) acepte un patrón amplio como `https://gym-full-tracker.vercel.app/**` y `http://localhost:5173/**`.
 - **Tres entradas al registro, un solo formulario.** `/log` (`LogEntryPage`) es solo un selector entre dos flujos existentes. `LogPage` (por `qrCode`) y `LogByExercisePage` (por `id`) son wrappers finos que resuelven el `Exercise` por el identificador que ya tienen a mano y comparten `components/ExerciseLogForm.tsx`. Mismo criterio para `ProgressPage` (`/progress/:exerciseId`): se llega desde `ExerciseCard`, que ya tiene el `id`.
+- **Actividad reciente agrupada por día local.** `useRecentActivity` devuelve `days` (grupos `{ day: 'YYYY-MM-DD', activity }`, del más nuevo al más viejo) usando `toLocalDayKey`, que toma la fecha en la hora local del dispositivo, no en UTC (un registro de las 22:30 en Argentina es de ese día aunque en UTC ya sea el siguiente). El texto del encabezado ("Hoy", "Ayer", "Lunes, 22 de septiembre", con año solo si no es el actual) es presentación y vive en `HomePage` (`formatDayLabel`). Cada ejercicio sigue apareciendo una sola vez, bajo el día de su último registro.
 - **Búsqueda en `/exercises` es client-side** (substring case-insensitive sobre nombre y grupo muscular): la lista completa ya está en memoria y un gimnasio no tiene tantos ejercicios como para justificar una query por tecla.
 - **Borrar registros** se hace desde `ProgressPage` (lista debajo del gráfico, con `window.confirm`), mismo patrón de confirmación/alerta que el borrado de ejercicios en `ExercisesPage`. No hay edición de registros: se borra y se vuelve a cargar.
 
