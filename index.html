@@ -5,6 +5,23 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GymTrack</title>
+    <script>
+      // Aplica el tema antes de que cargue la app, para que no parpadee en
+      // blanco al abrirla en oscuro. Misma clave y misma lógica que
+      // src/hooks/useTheme.ts: lo elegido en el menú, o si no hay elección,
+      // el modo del sistema.
+      (function () {
+        var theme
+        try {
+          theme = localStorage.getItem('gymtrack.theme')
+        } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        }
+        document.documentElement.classList.toggle('dark', theme === 'dark')
+        document.documentElement.style.colorScheme = theme
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
