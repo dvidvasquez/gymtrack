@@ -18,11 +18,11 @@ const ICON_BY_KIND: Record<FooterActionKind, typeof IconBarbell> = {
   save: IconDeviceFloppy,
 }
 
-// Envuelve todas las pantallas post-login (Home, Scan, Log, Progress,
-// Profile) con un header fijo (marca + menú, con acceso a Home) y un
-// footer fijo con una sola acción siempre disponible, para que ninguna
-// pantalla — ScanPage incluida — deje al usuario sin forma de volver al
-// inicio. Esa acción es dinámica según la página activa (ver
+// Envuelve todas las pantallas post-login (todo lo anidado bajo
+// RequireProfile en AppRouter) con un header fijo (marca + menú, con
+// acceso a Home) y un footer fijo con una sola acción siempre disponible,
+// para que ninguna pantalla — ScanPage incluida — deje al usuario sin
+// forma de volver al inicio. Esa acción es dinámica según la página activa (ver
 // FooterActionContext / useFooterAction): por defecto lleva al selector
 // de método de registro (/log, ver LogEntryPage), pero ProgressPage la
 // cambia a "agregar registro" y LogPage/ProfilePage/etc. a "guardar".
