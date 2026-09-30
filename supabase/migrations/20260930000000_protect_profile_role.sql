@@ -16,10 +16,15 @@
 -- de `revoke update (role)` porque Supabase le da a `authenticated` grants a
 -- nivel tabla, y un revoke por columna no tiene efecto mientras exista ese
 -- grant de tabla.
+--
+-- Nombres calificados con `public.` para no depender del search_path del
+-- SQL Editor; la función fija `search_path = ''` (no referencia tablas) para
+-- que no la marque el linter de seguridad de Supabase.
 
-create or replace function protect_profile_role()
+create or replace function public.protect_profile_role()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   if current_user in ('authenticated', 'anon') then
@@ -38,8 +43,8 @@ begin
 end;
 $$;
 
-drop trigger if exists profiles_protect_role on profiles;
+drop trigger if exists profiles_protect_role on public.profiles;
 
 create trigger profiles_protect_role
-  before insert or update on profiles
-  for each row execute function protect_profile_role();
+  before insert or update on public.profiles
+  for each row execute function public.protect_profile_role();
