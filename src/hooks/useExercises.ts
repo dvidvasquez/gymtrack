@@ -8,6 +8,37 @@ import {
 } from '../lib/services/exercises'
 import type { Exercise } from '../types/domain'
 
+// Grupos musculares que se pueden elegir al crear/editar un ejercicio, en el
+// orden en que se muestran (tren superior → core → tren inferior). Es una
+// lista de la app, no una restricción de la base: `exercises.muscle_group`
+// sigue siendo texto libre, así los ejercicios cargados antes con otros
+// valores (ej. "Piernas", "Brazos") siguen siendo válidos.
+export const MUSCLE_GROUPS = [
+  'Pecho',
+  'Espalda',
+  'Hombros',
+  'Trapecio',
+  'Bíceps',
+  'Tríceps',
+  'Antebrazos',
+  'Abdominales',
+  'Lumbares',
+  'Glúteos',
+  'Cuádriceps',
+  'Isquiotibiales',
+  'Aductores',
+  'Abductores',
+  'Pantorrillas',
+] as const
+
+// Opciones del selector para un ejercicio: la lista fija, más el valor que
+// ya tiene si no está en la lista (dato viejo), para no perderlo al editar.
+export function muscleGroupOptions(current: string | null): string[] {
+  const options: string[] = [...MUSCLE_GROUPS]
+  if (current && !options.includes(current)) options.unshift(current)
+  return options
+}
+
 export interface ExerciseFormInput {
   name: string
   muscleGroup: string
@@ -32,13 +63,18 @@ function hasErrorCode(err: unknown, code: string): boolean {
   return typeof err === 'object' && err !== null && 'code' in err && err.code === code
 }
 
-function toExerciseInput(input: ExerciseFormInput): ExerciseInput {
+function toExerciseInput(input: ExerciseFormInput, currentMuscleGroup: string | null): ExerciseInput {
   const name = input.name.trim()
   if (!name) throw new Error('El nombre no puede estar vacío')
 
+  const muscleGroup = input.muscleGroup.trim() || null
+  if (muscleGroup && !muscleGroupOptions(currentMuscleGroup).includes(muscleGroup)) {
+    throw new Error('Elegí un grupo muscular de la lista')
+  }
+
   return {
     name,
-    muscleGroup: input.muscleGroup.trim() || null,
+    muscleGroup,
     qrCode: input.qrCode.trim() || null,
   }
 }
@@ -73,7 +109,8 @@ export function useExercises(): UseExercisesResult {
   const saveExercise = useCallback(async (id: string | null, input: ExerciseFormInput) => {
     setSaving(true)
     try {
-      const details = toExerciseInput(input)
+      const current = id ? exercises.find((exercise) => exercise.id === id) : undefined
+      const details = toExerciseInput(input, current?.muscleGroup ?? null)
       const saved = id ? await updateExercise(id, details) : await createExercise(details)
       setExercises((prev) => {
         const withoutSaved = prev.filter((exercise) => exercise.id !== saved.id)
@@ -88,7 +125,7 @@ export function useExercises(): UseExercisesResult {
     } finally {
       setSaving(false)
     }
-  }, [])
+  }, [exercises])
 
   const removeExercise = useCallback(async (id: string) => {
     try {

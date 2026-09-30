@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import type { ExerciseFormInput } from '../hooks/useExercises'
+import { muscleGroupOptions, type ExerciseFormInput } from '../hooks/useExercises'
 import type { Exercise } from '../types/domain'
 import { Input } from './ui/Input'
 
@@ -52,12 +52,19 @@ export function ExerciseForm({ formId, exercise, onSave, onSuccess }: ExerciseFo
         >
           Grupo muscular (opcional)
         </label>
-        <Input
+        <select
           id="muscleGroup"
           value={muscleGroup}
           onChange={(event) => setMuscleGroup(event.target.value)}
-          placeholder="Ej: Piernas"
-        />
+          className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 dark:scheme-dark focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+        >
+          <option value="">Sin grupo muscular</option>
+          {muscleGroupOptions(exercise?.muscleGroup ?? null).map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="flex flex-col gap-2">
