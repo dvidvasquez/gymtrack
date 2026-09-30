@@ -29,6 +29,11 @@ export interface Exercise {
   createdAt: string
 }
 
+// Unidad en la que el usuario *ingresa* el peso de un registro. Solo existe
+// en el front: `LogEntry.weightKg` (y la base) siempre están en kg — la
+// conversión la hace useLogEntry antes de guardar.
+export type WeightUnit = 'kg' | 'lb'
+
 export interface LogEntry {
   id: string
   userId: string

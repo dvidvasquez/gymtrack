@@ -1,14 +1,12 @@
 import { useState, type FormEvent } from 'react'
+import { toKg, type NewLogEntryInput } from '../hooks/useLogEntry'
+import { useWeightUnit } from '../hooks/useWeightUnit'
 import { Badge } from './ui/Badge'
 import { Card } from './ui/Card'
 import { Input } from './ui/Input'
-import type { Exercise, LogEntry } from '../types/domain'
+import type { Exercise, LogEntry, WeightUnit } from '../types/domain'
 
-interface NewLogEntryInput {
-  weightKg: number
-  reps: number
-  sets: number
-}
+const WEIGHT_UNITS: WeightUnit[] = ['kg', 'lb']
 
 interface ExerciseLogFormProps {
   formId: string
@@ -32,7 +30,8 @@ export function ExerciseLogForm({
   onSave,
   onSuccess,
 }: ExerciseLogFormProps) {
-  const [weightKg, setWeightKg] = useState('')
+  const [weight, setWeight] = useState('')
+  const [unit, setUnit] = useWeightUnit()
   const [reps, setReps] = useState('')
   const [sets, setSets] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +41,8 @@ export function ExerciseLogForm({
     setError(null)
     try {
       await onSave({
-        weightKg: Number(weightKg),
+        weight: Number(weight),
+        unit,
         reps: Number(reps),
         sets: Number(sets),
       })
@@ -77,22 +77,46 @@ export function ExerciseLogForm({
       </div>
 
       <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+            Unidad del peso
+          </span>
+          <div
+            role="radiogroup"
+            aria-label="Unidad del peso"
+            className="flex rounded-lg border border-gray-200 dark:border-gray-800 p-0.5"
+          >
+            {WEIGHT_UNITS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="radio"
+                aria-checked={unit === option}
+                onClick={() => setUnit(option)}
+                className={`h-8 min-w-12 px-3 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 ${
+                  unit === option
+                    ? 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="weightKg"
-              className="text-sm font-normal text-gray-500 dark:text-gray-400"
-            >
-              Peso (kg)
+            <label htmlFor="weight" className="text-sm font-normal text-gray-500 dark:text-gray-400">
+              Peso ({unit})
             </label>
             <Input
-              id="weightKg"
+              id="weight"
               type="number"
               inputMode="decimal"
               min="0"
               step="0.25"
-              value={weightKg}
-              onChange={(event) => setWeightKg(event.target.value)}
+              value={weight}
+              onChange={(event) => setWeight(event.target.value)}
               required
             />
           </div>
@@ -127,6 +151,11 @@ export function ExerciseLogForm({
             />
           </div>
         </div>
+        {unit === 'lb' && weight !== '' && Number(weight) >= 0 && (
+          <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
+            Se guarda como {toKg(Number(weight), 'lb')} kg
+          </p>
+        )}
         {error && <p className="text-sm font-normal text-amber-600">{error}</p>}
       </form>
     </Card>
