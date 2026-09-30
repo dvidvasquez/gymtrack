@@ -73,6 +73,14 @@ Acceso a datos (lib/services/, lib/supabaseClient.ts)
 - Mantener actualizados la sección "Estado actual" de este archivo **y** la del `README.md` a medida que se agregan features.
 - Cualquier decisión de arquitectura no trivial debe quedar registrada en "Decisiones vigentes" (abajo), no solo en el historial de commits. Si una decisión deja de ser cierta, **editarla o borrarla** — no agregar una nota nueva que la contradiga más abajo. Una afirmación vieja escrita como vigente confunde más que no tener nada.
 
+## Flujo de trabajo con PRs (pedido explícito del usuario)
+
+- Cada cambio se trabaja en la rama asignada por la sesión, se pushea y se abre un PR contra `main` (título y descripción en español, con sección de cambios y de verificación).
+- **Mergear el PR sin preguntar** cuando: los checks del head actual están en verde (hoy: el deploy de preview de Vercel), no hay conflictos con `main` y no quedan comentarios de revisión sin resolver. Método: merge commit (`merge`), igual que los PRs anteriores. Vercel despliega `main` a producción solo.
+- **Excepción — no mergear sin confirmación del usuario** si el PR incluye una migración nueva en `supabase/migrations/`: las migraciones se aplican a mano en el SQL Editor, y mergear antes publicaría código que depende de un esquema que producción todavía no tiene. Pedir que la aplique, esperar el "ok" y recién ahí mergear.
+- Si un check falla o hay un conflicto, arreglarlo y pushear antes de mergear; nunca mergear en rojo.
+- Después de un merge, el trabajo siguiente arranca con la rama recreada desde `main` actualizado (el PR mergeado no se reutiliza).
+
 ## Qué NO hacer (evitar over-engineering)
 
 Este es un proyecto chico y personal. Los siguientes patrones son deliberadamente evitados por ahora — no agregarlos "por si acaso":
