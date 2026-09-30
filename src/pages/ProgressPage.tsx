@@ -1,3 +1,4 @@
+import { IconTrash } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
 import {
@@ -30,9 +31,8 @@ function formatAxisDate(value: string) {
   return new Date(value).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
 }
 
-function formatTooltipDate(label: ReactNode) {
-  if (typeof label !== 'string') return ''
-  return new Date(label).toLocaleString('es-AR', {
+function formatEntryDate(value: string) {
+  return new Date(value).toLocaleString('es-AR', {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
@@ -40,11 +40,20 @@ function formatTooltipDate(label: ReactNode) {
   })
 }
 
+function formatTooltipDate(label: ReactNode) {
+  if (typeof label !== 'string') return ''
+  return formatEntryDate(label)
+}
+
 export function ProgressPage() {
   const { exerciseId = '' } = useParams()
   const { user } = useAuth()
   const { exercise, loading: exerciseLoading } = useExerciseById(exerciseId)
-  const { history, loading: historyLoading } = useExerciseHistory(exerciseId, user?.id ?? null)
+  const {
+    history,
+    loading: historyLoading,
+    removeEntry,
+  } = useExerciseHistory(exerciseId, user?.id ?? null)
 
   useFooterAction(
     exercise
@@ -64,6 +73,15 @@ export function ProgressPage() {
         </p>
       </Card>
     )
+  }
+
+  async function handleDelete(id: string, description: string) {
+    if (!window.confirm(`¿Eliminar el registro ${description}? Esto no se puede deshacer.`)) return
+    try {
+      await removeEntry(id)
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'No se pudo eliminar el registro')
+    }
   }
 
   // Se usa el createdAt completo (único por registro) como dataKey del eje
@@ -115,6 +133,38 @@ export function ProgressPage() {
           </div>
         )}
       </Card>
+
+      {history.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Registros</h2>
+          <Card className="flex flex-col divide-y divide-gray-200 dark:divide-gray-800 py-2">
+            {[...history].reverse().map((entry) => {
+              const date = formatEntryDate(entry.createdAt)
+              const summary = `${entry.weightKg} kg × ${entry.reps} reps × ${entry.sets} series`
+              return (
+                <div key={entry.id} className="flex items-center justify-between gap-2 py-2">
+                  <div className="flex flex-col">
+                    <span className="text-base font-normal text-gray-700 dark:text-gray-300">
+                      {summary}
+                    </span>
+                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                      {date}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Eliminar registro del ${date}`}
+                    onClick={() => handleDelete(entry.id, `del ${date} (${summary})`)}
+                    className="h-9 w-9 shrink-0 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  >
+                    <IconTrash size={18} stroke={2} />
+                  </button>
+                </div>
+              )
+            })}
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

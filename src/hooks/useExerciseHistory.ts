@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
-import { getLogEntriesForExercise } from '../lib/services/logEntries'
+import { useCallback, useEffect, useState } from 'react'
+import { deleteLogEntry, getLogEntriesForExercise } from '../lib/services/logEntries'
 import type { LogEntry } from '../types/domain'
 
 interface UseExerciseHistoryResult {
   history: LogEntry[]
   loading: boolean
+  removeEntry: (id: string) => Promise<void>
 }
 
 export function useExerciseHistory(
@@ -41,5 +42,13 @@ export function useExerciseHistory(
     }
   }, [exerciseId, userId])
 
-  return { history, loading }
+  // Para corregir un registro cargado mal (ej. 800 kg en vez de 80), que si
+  // no queda para siempre distorsionando el gráfico. El RLS de log_entries
+  // ya limita el borrado a los registros propios.
+  const removeEntry = useCallback(async (id: string) => {
+    await deleteLogEntry(id)
+    setHistory((prev) => prev.filter((entry) => entry.id !== id))
+  }, [])
+
+  return { history, loading, removeEntry }
 }
