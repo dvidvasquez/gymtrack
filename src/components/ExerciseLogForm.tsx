@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { toKg, type NewLogEntryInput } from '../hooks/useLogEntry'
+import { useWeightUnit } from '../hooks/useWeightUnit'
 import { Badge } from './ui/Badge'
 import { Card } from './ui/Card'
 import { Input } from './ui/Input'
@@ -30,7 +31,7 @@ export function ExerciseLogForm({
   onSuccess,
 }: ExerciseLogFormProps) {
   const [weight, setWeight] = useState('')
-  const [unit, setUnit] = useState<WeightUnit>('kg')
+  const [unit, setUnit] = useWeightUnit()
   const [reps, setReps] = useState('')
   const [sets, setSets] = useState('')
   const [error, setError] = useState<string | null>(null)
