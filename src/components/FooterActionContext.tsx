@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect } from 'react'
 
 // El footer de AppShell muestra una sola acción a la vez, pero cuál
-// depende de la página activa (Home → escanear, Progress → agregar
-// registro, Log → guardar). Las páginas se "registran" acá con
-// useFooterAction en vez de que AppShell sepa de antemano qué mostrar
-// por ruta — así cada página decide su propia acción (y sus datos
-// dinámicos, como el qrCode de la máquina) sin que AppShell tenga que
-// duplicar esas consultas.
+// depende de la página activa (por defecto → registrar ejercicio,
+// Progress → agregar registro, Log/Profile → guardar). Las páginas se
+// "registran" acá con useFooterAction en vez de que AppShell sepa de
+// antemano qué mostrar por ruta — así cada página decide su propia acción
+// (y sus datos dinámicos, como el id del ejercicio) sin que AppShell tenga
+// que duplicar esas consultas.
 export type FooterActionKind = 'register' | 'add' | 'save'
 
 export interface FooterActionState {

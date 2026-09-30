@@ -23,6 +23,15 @@ interface UseExercisesResult {
   removeExercise: (id: string) => Promise<void>
 }
 
+// Códigos SQLSTATE de Postgres (vienen en `code` del error de Supabase).
+// Más estable que buscar texto en `message`, que puede cambiar de redacción.
+const UNIQUE_VIOLATION = '23505'
+const FOREIGN_KEY_VIOLATION = '23503'
+
+function hasErrorCode(err: unknown, code: string): boolean {
+  return typeof err === 'object' && err !== null && 'code' in err && err.code === code
+}
+
 function toExerciseInput(input: ExerciseFormInput): ExerciseInput {
   const name = input.name.trim()
   if (!name) throw new Error('El nombre no puede estar vacío')
@@ -72,7 +81,7 @@ export function useExercises(): UseExercisesResult {
       })
       return saved
     } catch (err) {
-      if (err instanceof Error && err.message.includes('duplicate key')) {
+      if (hasErrorCode(err, UNIQUE_VIOLATION)) {
         throw new Error('Ya existe un ejercicio con ese código QR')
       }
       throw err
@@ -86,7 +95,7 @@ export function useExercises(): UseExercisesResult {
       await deleteExercise(id)
       setExercises((prev) => prev.filter((exercise) => exercise.id !== id))
     } catch (err) {
-      if (err instanceof Error && err.message.includes('violates foreign key constraint')) {
+      if (hasErrorCode(err, FOREIGN_KEY_VIOLATION)) {
         throw new Error('No se puede eliminar: tiene registros de entrenamiento asociados')
       }
       throw err

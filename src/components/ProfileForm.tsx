@@ -62,7 +62,7 @@ export function ProfileForm({ formId, profile, onSave, onSuccess }: ProfileFormP
             type="number"
             inputMode="decimal"
             min="1"
-            max="500"
+            max="499.9"
             step="0.1"
             value={weightKg}
             onChange={(event) => setWeightKg(event.target.value)}
@@ -78,7 +78,7 @@ export function ProfileForm({ formId, profile, onSave, onSuccess }: ProfileFormP
             type="number"
             inputMode="numeric"
             min="1"
-            max="300"
+            max="299"
             step="1"
             value={heightCm}
             onChange={(event) => setHeightCm(event.target.value)}

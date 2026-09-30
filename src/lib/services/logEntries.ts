@@ -85,6 +85,11 @@ export async function getLogEntriesForExercise(
   return (data ?? []).map(toLogEntry)
 }
 
+export async function deleteLogEntry(id: string): Promise<void> {
+  const { error } = await supabase.from('log_entries').delete().eq('id', id)
+  if (error) throw error
+}
+
 export interface LogEntryWithExercise {
   logEntry: LogEntry
   exercise: Exercise

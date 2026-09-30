@@ -90,7 +90,7 @@ export function ExerciseLogForm({
               type="number"
               inputMode="decimal"
               min="0"
-              step="0.5"
+              step="0.25"
               value={weightKg}
               onChange={(event) => setWeightKg(event.target.value)}
               required

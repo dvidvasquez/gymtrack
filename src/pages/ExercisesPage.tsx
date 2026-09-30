@@ -28,7 +28,7 @@ export function ExercisesPage() {
 
   // Mismo patrón que ProgressPage: el botón de "+" vive en el footer de
   // AppShell, no inline en la página — para member (sin permiso de alta) cae
-  // al default de AppShell (escanear).
+  // al default de AppShell (registrar ejercicio).
   useFooterAction(owner ? { kind: 'add', to: '/exercises/new', label: 'Nuevo ejercicio' } : null)
 
   const filteredExercises = exercises.filter((exercise) => matchesSearch(exercise, search))
