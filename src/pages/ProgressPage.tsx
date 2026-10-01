@@ -1,5 +1,5 @@
 import { IconTrash } from '@tabler/icons-react'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   CartesianGrid,
@@ -11,10 +11,30 @@ import {
   YAxis,
 } from 'recharts'
 import { useFooterAction } from '../components/FooterActionContext'
+import { LoadErrorCard } from '../components/LoadErrorCard'
 import { Card } from '../components/ui/Card'
+import { SegmentedControl } from '../components/ui/SegmentedControl'
 import { useAuth } from '../hooks/useAuth'
 import { useExerciseById } from '../hooks/useExerciseById'
-import { useExerciseHistory } from '../hooks/useExerciseHistory'
+import { metricValue, useExerciseHistory } from '../hooks/useExerciseHistory'
+import type { ProgressMetric } from '../types/domain'
+
+const METRIC_OPTIONS: { value: ProgressMetric; label: string }[] = [
+  { value: 'weight', label: 'Peso' },
+  { value: 'oneRepMax', label: '1RM' },
+  { value: 'volume', label: 'Volumen' },
+]
+
+// Nombre en el tooltip y explicación debajo del selector, por métrica.
+const METRIC_DETAILS: Record<ProgressMetric, { name: string; description: string }> = {
+  weight: { name: 'Peso', description: 'El peso de cada registro.' },
+  oneRepMax: {
+    name: '1RM estimado',
+    description:
+      'Peso máximo estimado para 1 repetición (fórmula de Epley). Sube aunque solo subas reps.',
+  },
+  volume: { name: 'Volumen', description: 'Peso × reps × series: el trabajo total del registro.' },
+}
 
 // Gris fijo (Tailwind gray-500) en vez de `stroke="currentColor"` + clase
 // `dark:` de Tailwind: ese approach no se estaba heredando de forma
@@ -48,12 +68,20 @@ function formatTooltipDate(label: ReactNode) {
 export function ProgressPage() {
   const { exerciseId = '' } = useParams()
   const { user } = useAuth()
-  const { exercise, loading: exerciseLoading } = useExerciseById(exerciseId)
+  const {
+    exercise,
+    loading: exerciseLoading,
+    error: exerciseError,
+    retry: retryExercise,
+  } = useExerciseById(exerciseId)
   const {
     history,
     loading: historyLoading,
+    error: historyError,
+    retry: retryHistory,
     removeEntry,
   } = useExerciseHistory(exerciseId, user?.id ?? null)
+  const [metric, setMetric] = useState<ProgressMetric>('weight')
 
   useFooterAction(
     exercise
@@ -64,6 +92,8 @@ export function ProgressPage() {
   if (exerciseLoading) {
     return <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
   }
+
+  if (exerciseError) return <LoadErrorCard message={exerciseError} onRetry={retryExercise} />
 
   if (!exercise) {
     return (
@@ -90,49 +120,75 @@ export function ProgressPage() {
   // misma categoría en el eje, mostrando siempre el tooltip del primero.
   const chartData = history.map((entry) => ({
     createdAt: entry.createdAt,
-    weightKg: entry.weightKg,
+    value: metricValue(entry, metric),
   }))
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-medium text-gray-900 dark:text-gray-100">{exercise.name}</h1>
 
-      <Card>
-        {historyLoading ? (
-          <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
-        ) : chartData.length === 0 ? (
-          <p className="text-base font-normal text-gray-500 dark:text-gray-400">
-            Todavía no hay registros para graficar.
-          </p>
-        ) : (
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  className="stroke-gray-200 dark:stroke-gray-800"
+      {historyError ? (
+        <LoadErrorCard message={historyError} onRetry={retryHistory} />
+      ) : (
+        <Card className="flex flex-col gap-4">
+          {historyLoading ? (
+            <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
+          ) : chartData.length === 0 ? (
+            <p className="text-base font-normal text-gray-500 dark:text-gray-400">
+              Todavía no hay registros para graficar.
+            </p>
+          ) : (
+            <>
+              <div className="flex flex-col gap-2">
+                <SegmentedControl
+                  label="Qué graficar"
+                  options={METRIC_OPTIONS}
+                  value={metric}
+                  onChange={setMetric}
                 />
-                <XAxis
-                  dataKey="createdAt"
-                  tickFormatter={formatAxisDate}
-                  tick={{ fontSize: 12, fill: AXIS_TEXT_COLOR }}
-                  stroke={AXIS_TEXT_COLOR}
-                />
-                <YAxis tick={{ fontSize: 12, fill: AXIS_TEXT_COLOR }} stroke={AXIS_TEXT_COLOR} />
-                <Tooltip labelFormatter={formatTooltipDate} />
-                <Line
-                  type="monotone"
-                  dataKey="weightKg"
-                  name="Peso (kg)"
-                  stroke={LINE_COLOR}
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </Card>
+                <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                  {METRIC_DETAILS[metric].description}
+                </p>
+              </div>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-gray-200 dark:stroke-gray-800"
+                    />
+                    <XAxis
+                      dataKey="createdAt"
+                      tickFormatter={formatAxisDate}
+                      tick={{ fontSize: 12, fill: AXIS_TEXT_COLOR }}
+                      stroke={AXIS_TEXT_COLOR}
+                    />
+                    {/* Eje ajustado al rango de los datos, no desde 0: si no, una mejora
+                        de 106.7 a 107.7 kg se ve como una línea plana. */}
+                    <YAxis
+                      domain={['auto', 'auto']}
+                      tick={{ fontSize: 12, fill: AXIS_TEXT_COLOR }}
+                      stroke={AXIS_TEXT_COLOR}
+                    />
+                    <Tooltip
+                      labelFormatter={formatTooltipDate}
+                      formatter={(value) => `${value} kg`}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      name={METRIC_DETAILS[metric].name}
+                      stroke={LINE_COLOR}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          )}
+        </Card>
+      )}
 
       {history.length > 0 && (
         <div className="flex flex-col gap-3">

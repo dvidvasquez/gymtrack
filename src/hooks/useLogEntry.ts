@@ -17,8 +17,36 @@ const KG_PER_LB = 0.45359237
 // marcadas en lb). Se redondea a 2 decimales, la precisión de
 // `log_entries.weight_kg` (numeric(6, 2)).
 export function toKg(weight: number, unit: WeightUnit): number {
-  const kg = unit === 'lb' ? weight * KG_PER_LB : weight
-  return Math.round(kg * 100) / 100
+  return roundTo2(unit === 'lb' ? weight * KG_PER_LB : weight)
+}
+
+function roundTo2(value: number): number {
+  return Math.round(value * 100) / 100
+}
+
+// Inversa de toKg, para mostrar en la unidad elegida un peso guardado en kg
+// (ej. precargar el formulario con el último registro). 20.41 kg → 45 lb.
+export function fromKg(weightKg: number, unit: WeightUnit): number {
+  return roundTo2(unit === 'lb' ? weightKg / KG_PER_LB : weightKg)
+}
+
+// Salto del botón "+" junto al peso: el disco más chico que se suele
+// agregar por lado en cada sistema.
+export const WEIGHT_INCREMENT: Record<WeightUnit, number> = { kg: 2.5, lb: 5 }
+
+export function addWeightIncrement(weight: number, unit: WeightUnit): number {
+  return roundTo2(weight + WEIGHT_INCREMENT[unit])
+}
+
+// Regla de negocio: un registro nuevo arranca con los mismos valores que el
+// último registro de ese ejercicio (lo más común es repetir o subir un poco),
+// con el peso convertido a la unidad elegida. Sin último registro, vacío.
+export function suggestedEntry(
+  lastEntry: LogEntry | null,
+  unit: WeightUnit,
+): { weight: number; reps: number; sets: number } | null {
+  if (!lastEntry) return null
+  return { weight: fromKg(lastEntry.weightKg, unit), reps: lastEntry.reps, sets: lastEntry.sets }
 }
 
 interface UseLogEntryResult {

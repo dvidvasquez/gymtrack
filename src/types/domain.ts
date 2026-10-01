@@ -32,6 +32,9 @@ export interface Exercise {
 // Tema visual de la app, elegido desde el menú (ver hooks/useTheme.ts).
 export type Theme = 'light' | 'dark'
 
+// Qué se grafica en ProgressPage (ver metricValue en hooks/useExerciseHistory.ts).
+export type ProgressMetric = 'weight' | 'oneRepMax' | 'volume'
+
 // Unidad en la que el usuario *ingresa* el peso de un registro. Solo existe
 // en el front: `LogEntry.weightKg` (y la base) siempre están en kg — la
 // conversión la hace useLogEntry antes de guardar.

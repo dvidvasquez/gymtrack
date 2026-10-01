@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getRecentLogEntries, type LogEntryWithExercise } from '../lib/services/logEntries'
 import type { Exercise, LogEntry } from '../types/domain'
 
@@ -18,6 +18,10 @@ export interface ActivityDay {
 interface UseRecentActivityResult {
   days: ActivityDay[]
   loading: boolean
+  // No null cuando falló la carga: distinto de `days` vacío sin error, que
+  // sí significa "todavía no registraste nada".
+  error: string | null
+  retry: () => void
 }
 
 export function toLocalDayKey(date: Date): string {
@@ -31,19 +35,25 @@ export function toLocalDayKey(date: Date): string {
 // aun cargando cada serie por separado; es un solo fetch chico.
 const RECENT_ENTRIES_LIMIT = 200
 
+const LOAD_ERROR_MESSAGE = 'No se pudo cargar tu actividad. Revisá tu conexión y reintentá.'
+
 export function useRecentActivity(userId: string | null): UseRecentActivityResult {
   const [days, setDays] = useState<ActivityDay[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     if (!userId) {
       setDays([])
       setLoading(false)
+      setError(null)
       return
     }
 
     let cancelled = false
     setLoading(true)
+    setError(null)
 
     getRecentLogEntries(userId, RECENT_ENTRIES_LIMIT)
       .then((entries) => {
@@ -54,15 +64,18 @@ export function useRecentActivity(userId: string | null): UseRecentActivityResul
       .catch(() => {
         if (cancelled) return
         setDays([])
+        setError(LOAD_ERROR_MESSAGE)
         setLoading(false)
       })
 
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [userId, attempt])
 
-  return { days, loading }
+  const retry = useCallback(() => setAttempt((prev) => prev + 1), [])
+
+  return { days, loading, error, retry }
 }
 
 // Regla de negocio: cada día muestra cada ejercicio que se hizo ese día una

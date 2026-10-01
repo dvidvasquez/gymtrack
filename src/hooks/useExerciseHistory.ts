@@ -1,12 +1,39 @@
 import { useCallback, useEffect, useState } from 'react'
 import { deleteLogEntry, getLogEntriesForExercise } from '../lib/services/logEntries'
-import type { LogEntry } from '../types/domain'
+import type { LogEntry, ProgressMetric } from '../types/domain'
+
+function roundTo1(value: number): number {
+  return Math.round(value * 10) / 10
+}
+
+// Regla de negocio: qué número representa el progreso de un registro según
+// la métrica elegida en el gráfico. Todas en kg.
+// - weight: el peso tal cual.
+// - oneRepMax: peso máximo estimado para 1 repetición (fórmula de Epley,
+//   peso × (1 + reps / 30)). Con 1 rep es el peso mismo. Sirve para ver
+//   progreso cuando subís reps sin subir peso.
+// - volume: peso × reps × series, el trabajo total del registro.
+export function metricValue(entry: LogEntry, metric: ProgressMetric): number {
+  switch (metric) {
+    case 'weight':
+      return entry.weightKg
+    case 'oneRepMax':
+      return entry.reps === 1 ? entry.weightKg : roundTo1(entry.weightKg * (1 + entry.reps / 30))
+    case 'volume':
+      return roundTo1(entry.weightKg * entry.reps * entry.sets)
+  }
+}
 
 interface UseExerciseHistoryResult {
   history: LogEntry[]
   loading: boolean
+  // No null cuando falló la carga: distinto de un historial vacío.
+  error: string | null
+  retry: () => void
   removeEntry: (id: string) => Promise<void>
 }
+
+const LOAD_ERROR_MESSAGE = 'No se pudo cargar tu historial. Revisá tu conexión y reintentá.'
 
 export function useExerciseHistory(
   exerciseId: string | null,
@@ -14,16 +41,20 @@ export function useExerciseHistory(
 ): UseExerciseHistoryResult {
   const [history, setHistory] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     if (!exerciseId || !userId) {
       setHistory([])
       setLoading(false)
+      setError(null)
       return
     }
 
     let cancelled = false
     setLoading(true)
+    setError(null)
 
     getLogEntriesForExercise(exerciseId, userId)
       .then((result) => {
@@ -34,13 +65,16 @@ export function useExerciseHistory(
       .catch(() => {
         if (cancelled) return
         setHistory([])
+        setError(LOAD_ERROR_MESSAGE)
         setLoading(false)
       })
 
     return () => {
       cancelled = true
     }
-  }, [exerciseId, userId])
+  }, [exerciseId, userId, attempt])
+
+  const retry = useCallback(() => setAttempt((prev) => prev + 1), [])
 
   // Para corregir un registro cargado mal (ej. 800 kg en vez de 80), que si
   // no queda para siempre distorsionando el gráfico. El RLS de log_entries
@@ -50,5 +84,5 @@ export function useExerciseHistory(
     setHistory((prev) => prev.filter((entry) => entry.id !== id))
   }, [])
 
-  return { history, loading, removeEntry }
+  return { history, loading, error, retry, removeEntry }
 }

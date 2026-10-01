@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { ExerciseLogForm } from '../components/ExerciseLogForm'
 import { useFooterAction } from '../components/FooterActionContext'
+import { LoadErrorCard } from '../components/LoadErrorCard'
 import { Card } from '../components/ui/Card'
 import { useAuth } from '../hooks/useAuth'
 import { useExerciseByQrCode } from '../hooks/useExerciseByQrCode'
@@ -13,8 +14,18 @@ export function LogPage() {
   const { qrCode = '' } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { exercise, loading: exerciseLoading } = useExerciseByQrCode(qrCode)
-  const { lastEntry, loading: lastEntryLoading } = useLastEntry(
+  const {
+    exercise,
+    loading: exerciseLoading,
+    error: exerciseError,
+    retry: retryExercise,
+  } = useExerciseByQrCode(qrCode)
+  const {
+    lastEntry,
+    loading: lastEntryLoading,
+    error: lastEntryError,
+    retry: retryLastEntry,
+  } = useLastEntry(
     exercise?.id ?? null,
     user?.id ?? null,
   )
@@ -34,6 +45,8 @@ export function LogPage() {
     )
   }
 
+  if (exerciseError) return <LoadErrorCard message={exerciseError} onRetry={retryExercise} />
+
   if (!exercise) {
     return (
       <Card className="flex flex-col items-center gap-4 text-center">
@@ -50,6 +63,8 @@ export function LogPage() {
       exercise={exercise}
       lastEntry={lastEntry}
       lastEntryLoading={lastEntryLoading}
+      lastEntryError={lastEntryError}
+      onRetryLastEntry={retryLastEntry}
       onSave={createEntry}
       onSuccess={() => navigate('/home', { viewTransition: true, state: { justSaved: true } })}
     />
