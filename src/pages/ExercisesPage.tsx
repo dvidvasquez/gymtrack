@@ -5,7 +5,6 @@ import { useFooterAction } from '../components/FooterActionContext'
 import { Badge } from '../components/ui/Badge'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
-import { useAuth } from '../hooks/useAuth'
 import { useExercises } from '../hooks/useExercises'
 import { isOwner, useProfile } from '../hooks/useProfile'
 import type { Exercise } from '../types/domain'
@@ -20,8 +19,7 @@ function matchesSearch(exercise: Exercise, query: string): boolean {
 }
 
 export function ExercisesPage() {
-  const { user } = useAuth()
-  const { profile } = useProfile(user?.id ?? null)
+  const { profile } = useProfile()
   const { exercises, loading, error, removeExercise } = useExercises()
   const owner = isOwner(profile)
   const [search, setSearch] = useState('')

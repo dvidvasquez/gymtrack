@@ -8,8 +8,8 @@ import { LoadErrorCard } from './LoadErrorCard'
 // datos — esto es solo para no mostrarle a un 'member' un formulario que
 // va a fallar al guardar.
 export function RequireOwner() {
-  const { user, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading, error, retry } = useProfile(user?.id ?? null)
+  const { loading: authLoading } = useAuth()
+  const { profile, loading: profileLoading, error, retry } = useProfile()
 
   if (authLoading || profileLoading) return null
   if (error) return <LoadErrorCard message={error} onRetry={retry} />

@@ -14,8 +14,13 @@ import { LogPage } from '../pages/LogPage'
 import { NewExercisePage } from '../pages/NewExercisePage'
 import { OnboardingPage } from '../pages/OnboardingPage'
 import { ProfilePage } from '../pages/ProfilePage'
-import { ProgressPage } from '../pages/ProgressPage'
-import { ScanPage } from '../pages/ScanPage'
+import { lazyPage } from './lazyPage'
+
+// Las dos páginas con librerías pesadas se cargan recién al entrar
+// (html5-qrcode en Scan, recharts en Progress): así no forman parte de la
+// descarga inicial de la app. Ver router/lazyPage.ts.
+const ScanPage = lazyPage(() => import('../pages/ScanPage').then((m) => m.ScanPage))
+const ProgressPage = lazyPage(() => import('../pages/ProgressPage').then((m) => m.ProgressPage))
 
 export function AppRouter() {
   return (

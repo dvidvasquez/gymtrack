@@ -4,8 +4,8 @@ import { isProfileComplete, useProfile } from '../hooks/useProfile'
 import { LoadErrorCard } from './LoadErrorCard'
 
 export function RequireProfile() {
-  const { user, loading: authLoading } = useAuth()
-  const { profile, loading: profileLoading, error, retry } = useProfile(user?.id ?? null)
+  const { loading: authLoading } = useAuth()
+  const { profile, loading: profileLoading, error, retry } = useProfile()
   const location = useLocation()
 
   if (authLoading || profileLoading) return null

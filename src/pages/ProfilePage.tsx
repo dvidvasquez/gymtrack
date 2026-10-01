@@ -4,15 +4,13 @@ import { useFooterAction } from '../components/FooterActionContext'
 import { LoadErrorCard } from '../components/LoadErrorCard'
 import { ProfileForm } from '../components/ProfileForm'
 import { Card } from '../components/ui/Card'
-import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 
 const PROFILE_FORM_ID = 'profile-form'
 const SUCCESS_TIMEOUT_MS = 3000
 
 export function ProfilePage() {
-  const { user } = useAuth()
-  const { profile, loading, error, retry, saveProfileDetails } = useProfile(user?.id ?? null)
+  const { profile, loading, error, retry, saveProfileDetails } = useProfile()
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
