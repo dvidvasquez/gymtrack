@@ -9,9 +9,9 @@ Side project con dos objetivos: practicar el flujo de construir una app con ayud
 ## Qué hace
 
 - **Login con Google** y perfil con nombre, peso, estatura y fecha de nacimiento (se piden una vez y se editan desde el menú → Perfil).
-- **Registrar un ejercicio:** el botón del footer ofrece escanear el QR de la máquina o elegir el ejercicio de la lista. Se muestra el último registro y se carga peso (en kg o lb; siempre se guarda en kg), repeticiones y series.
+- **Registrar un ejercicio:** el botón del footer ofrece escanear el QR de la máquina o elegir el ejercicio de la lista. El formulario arranca precargado con tu último registro (peso, repeticiones y series), con un botón para sumar peso; el peso se puede cargar en kg o lb y siempre se guarda en kg.
 - **Actividad reciente** en Home, agrupada por día (Hoy, Ayer, fecha): cada día muestra los ejercicios que hiciste ese día, con su último registro.
-- **Progreso por ejercicio:** gráfico de peso en el tiempo y lista de registros (se puede borrar uno cargado por error).
+- **Progreso por ejercicio:** gráfico de peso, 1RM estimado o volumen en el tiempo, y lista de registros (se puede borrar uno cargado por error).
 - **Tema claro u oscuro** desde el menú (por defecto sigue el del celular; la elección se recuerda en ese dispositivo).
 - **Catálogo de ejercicios** con búsqueda; el grupo muscular se elige de una lista (Pecho, Espalda, Tríceps, Cuádriceps...). Solo los usuarios con rol `owner` pueden crear, editar o borrar ejercicios; el rol se otorga a mano por SQL.
 - **QR imprimibles:** `npm run qr:generate` genera un PNG por máquina (la lista está en el script).

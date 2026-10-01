@@ -2,6 +2,7 @@ import { IconCircleCheck } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ExerciseCard } from '../components/ExerciseCard'
+import { LoadErrorCard } from '../components/LoadErrorCard'
 import { useAuth } from '../hooks/useAuth'
 import { toLocalDayKey, useRecentActivity } from '../hooks/useRecentActivity'
 
@@ -31,7 +32,7 @@ function formatDayLabel(day: string): string {
 
 export function HomePage() {
   const { user } = useAuth()
-  const { days, loading } = useRecentActivity(user?.id ?? null)
+  const { days, loading, error, retry } = useRecentActivity(user?.id ?? null)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -65,6 +66,8 @@ export function HomePage() {
       <h1 className="text-lg font-medium text-gray-900 dark:text-gray-100">Actividad reciente</h1>
       {loading ? (
         <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
+      ) : error ? (
+        <LoadErrorCard message={error} onRetry={retry} />
       ) : days.length === 0 ? (
         <p className="text-base font-normal text-gray-500 dark:text-gray-400">
           Todavía no registraste ningún entrenamiento.

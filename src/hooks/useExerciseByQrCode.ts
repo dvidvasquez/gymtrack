@@ -1,17 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getExerciseByQrCode } from '../lib/services/exercises'
 import type { Exercise } from '../types/domain'
 
 interface UseExerciseByQrCodeResult {
   exercise: Exercise | null
   loading: boolean
+  // No null cuando falló la carga: distinto de `exercise === null` sin
+  // error, que sí significa "ningún ejercicio tiene ese QR".
   error: string | null
+  retry: () => void
 }
+
+const LOAD_ERROR_MESSAGE = 'No se pudo buscar el ejercicio. Revisá tu conexión y reintentá.'
 
 export function useExerciseByQrCode(qrCode: string): UseExerciseByQrCodeResult {
   const [exercise, setExercise] = useState<Exercise | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     if (!qrCode) {
@@ -31,16 +37,19 @@ export function useExerciseByQrCode(qrCode: string): UseExerciseByQrCodeResult {
         setExercise(result)
         setLoading(false)
       })
-      .catch((err) => {
+      .catch(() => {
         if (cancelled) return
-        setError(err instanceof Error ? err.message : 'No se pudo buscar el ejercicio')
+        setExercise(null)
+        setError(LOAD_ERROR_MESSAGE)
         setLoading(false)
       })
 
     return () => {
       cancelled = true
     }
-  }, [qrCode])
+  }, [qrCode, attempt])
 
-  return { exercise, loading, error }
+  const retry = useCallback(() => setAttempt((prev) => prev + 1), [])
+
+  return { exercise, loading, error, retry }
 }
