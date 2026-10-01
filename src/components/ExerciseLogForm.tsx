@@ -2,6 +2,7 @@ import { IconPlus } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import {
   addWeightIncrement,
+  NOTES_MAX_LENGTH,
   suggestedEntry,
   toKg,
   WEIGHT_INCREMENT,
@@ -19,32 +20,48 @@ const WEIGHT_UNIT_OPTIONS: { value: WeightUnit; label: string }[] = [
   { value: 'lb', label: 'lb' },
 ]
 
-interface ExerciseLogFormProps {
+interface LastEntryState {
+  entry: LogEntry | null
+  loading: boolean
+  error: string | null
+  onRetry: () => void
+}
+
+interface ExerciseLogFormProps<T> {
   formId: string
   exercise: Exercise
-  lastEntry: LogEntry | null
-  lastEntryLoading: boolean
-  lastEntryError: string | null
-  onRetryLastEntry: () => void
-  onSave: (input: NewLogEntryInput) => Promise<LogEntry>
-  onSuccess: () => void
+  // Alta: el último registro (se muestra y precarga los campos). Edición:
+  // `editingEntry`, el registro que se modifica (precarga todo, nota
+  // incluida, y reemplaza la sección "Último registro"). Va uno de los dos.
+  lastEntry?: LastEntryState
+  editingEntry?: LogEntry
+  onSave: (input: NewLogEntryInput) => Promise<T>
+  onSuccess: (result: T) => void
+}
+
+function formatEntryDate(value: string): string {
+  return new Date(value).toLocaleString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 // Cuerpo compartido de "loguear una serie contra un ejercicio": nombre +
-// badge + último registro + form de peso/reps/series. Lo usan LogPage (entra
-// por qrCode, escaneando) y LogByExercisePage (entra por id, eligiendo de la
-// lista en /exercises) — mismo criterio que ProfileForm: sin botón propio,
-// conectado por `form={formId}` al footer dinámico de AppShell.
-export function ExerciseLogForm({
+// badge + último registro + form de peso/reps/series/nota. Lo usan LogPage
+// (entra por qrCode, escaneando), LogByExercisePage (entra por id, eligiendo
+// de la lista en /exercises) y EditLogEntryPage (edita un registro existente)
+// — mismo criterio que ProfileForm: sin botón propio, conectado por
+// `form={formId}` al footer dinámico de AppShell.
+export function ExerciseLogForm<T>({
   formId,
   exercise,
   lastEntry,
-  lastEntryLoading,
-  lastEntryError,
-  onRetryLastEntry,
+  editingEntry,
   onSave,
   onSuccess,
-}: ExerciseLogFormProps) {
+}: ExerciseLogFormProps<T>) {
   const [unit, setUnit] = useWeightUnit()
   // `null` = el usuario todavía no tocó el campo: se muestra el valor sugerido
   // (el del último registro, ver suggestedEntry). Así la sugerencia aparece
@@ -53,25 +70,30 @@ export function ExerciseLogForm({
   const [weight, setWeight] = useState<string | null>(null)
   const [reps, setReps] = useState<string | null>(null)
   const [sets, setSets] = useState<string | null>(null)
+  // La nota no se sugiere desde el último registro (es de cada sesión); en
+  // edición arranca con la nota que ya tenía.
+  const [notes, setNotes] = useState(editingEntry?.notes ?? '')
   const [error, setError] = useState<string | null>(null)
 
-  const suggestion = suggestedEntry(lastEntry, unit)
+  const suggestion = suggestedEntry(editingEntry ?? lastEntry?.entry ?? null, unit)
   const weightValue = weight ?? (suggestion ? String(suggestion.weight) : '')
   const repsValue = reps ?? (suggestion ? String(suggestion.reps) : '')
   const setsValue = sets ?? (suggestion ? String(suggestion.sets) : '')
-  const showsSuggestion = suggestion !== null && (weight === null || reps === null || sets === null)
+  const showsSuggestion =
+    !editingEntry && suggestion !== null && (weight === null || reps === null || sets === null)
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
     try {
-      await onSave({
+      const result = await onSave({
         weight: Number(weightValue),
         unit,
         reps: Number(repsValue),
         sets: Number(setsValue),
+        notes,
       })
-      onSuccess()
+      onSuccess(result)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar el registro')
     }
@@ -84,33 +106,47 @@ export function ExerciseLogForm({
         {exercise.muscleGroup && <Badge>{exercise.muscleGroup}</Badge>}
       </div>
 
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-          Último registro
-        </span>
-        {lastEntryLoading ? (
-          <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
-        ) : lastEntryError ? (
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-normal text-amber-600">{lastEntryError}</p>
-            <button
-              type="button"
-              onClick={onRetryLastEntry}
-              className="shrink-0 text-sm font-medium text-red-600 dark:text-red-400 underline"
-            >
-              Reintentar
-            </button>
-          </div>
-        ) : lastEntry ? (
-          <p className="text-base font-normal text-gray-700 dark:text-gray-300">
-            {lastEntry.weightKg} kg × {lastEntry.reps} reps × {lastEntry.sets} series
-          </p>
-        ) : (
-          <p className="text-base font-normal text-gray-500 dark:text-gray-400">
-            Todavía no tenés registros en este ejercicio.
-          </p>
-        )}
-      </div>
+      {editingEntry ? (
+        <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
+          Editando el registro del {formatEntryDate(editingEntry.createdAt)}
+        </p>
+      ) : lastEntry ? (
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+            Último registro
+          </span>
+          {lastEntry.loading ? (
+            <p className="text-base font-normal text-gray-500 dark:text-gray-400">Cargando...</p>
+          ) : lastEntry.error ? (
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-normal text-amber-600">{lastEntry.error}</p>
+              <button
+                type="button"
+                onClick={lastEntry.onRetry}
+                className="shrink-0 text-sm font-medium text-red-600 dark:text-red-400 underline"
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : lastEntry.entry ? (
+            <>
+              <p className="text-base font-normal text-gray-700 dark:text-gray-300">
+                {lastEntry.entry.weightKg} kg × {lastEntry.entry.reps} reps ×{' '}
+                {lastEntry.entry.sets} series
+              </p>
+              {lastEntry.entry.notes && (
+                <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                  “{lastEntry.entry.notes}”
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-base font-normal text-gray-500 dark:text-gray-400">
+              Todavía no tenés registros en este ejercicio.
+            </p>
+          )}
+        </div>
+      ) : null}
 
       <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-2">
@@ -179,6 +215,25 @@ export function ExerciseLogForm({
           <IconPlus size={16} stroke={2} />
           {WEIGHT_INCREMENT[unit]} {unit}
         </button>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-2">
+            <label htmlFor="notes" className="text-sm font-normal text-gray-500 dark:text-gray-400">
+              Nota (opcional)
+            </label>
+            <span className="text-sm font-normal text-gray-400 dark:text-gray-500">
+              {notes.length}/{NOTES_MAX_LENGTH}
+            </span>
+          </div>
+          <textarea
+            id="notes"
+            rows={2}
+            maxLength={NOTES_MAX_LENGTH}
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            placeholder="Ej: agarre cerrado, me molestó el hombro"
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+          />
+        </div>
         {showsSuggestion && (
           <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
             Precargado con tu último registro.

@@ -1,4 +1,4 @@
-import { IconCircleCheck } from '@tabler/icons-react'
+import { IconCircleCheck, IconTrophy } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ExerciseCard } from '../components/ExerciseCard'
@@ -8,6 +8,9 @@ import { toLocalDayKey, useRecentActivity } from '../hooks/useRecentActivity'
 
 interface LogSavedState {
   justSaved?: boolean
+  // El registro guardado superó tu mejor peso en ese ejercicio (ver
+  // isWeightRecord en useLogEntry).
+  newRecord?: boolean
 }
 
 const SUCCESS_MESSAGE_TIMEOUT_MS = 4000
@@ -39,6 +42,9 @@ export function HomePage() {
   const [showSuccess, setShowSuccess] = useState<boolean>(
     () => (location.state as LogSavedState | null)?.justSaved ?? false,
   )
+  const [isNewRecord] = useState<boolean>(
+    () => (location.state as LogSavedState | null)?.newRecord ?? false,
+  )
 
   useEffect(() => {
     if (!showSuccess) return
@@ -58,8 +64,17 @@ export function HomePage() {
     <div className="flex flex-col gap-3">
       {showSuccess && (
         <div className="flex items-center gap-2 rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950 px-3 py-2 text-sm font-normal text-green-700 dark:text-green-400">
-          <IconCircleCheck size={18} stroke={2} />
-          Registro guardado
+          {isNewRecord ? (
+            <>
+              <IconTrophy size={18} stroke={2} />
+              ¡Nuevo récord personal!
+            </>
+          ) : (
+            <>
+              <IconCircleCheck size={18} stroke={2} />
+              Registro guardado
+            </>
+          )}
         </div>
       )}
 

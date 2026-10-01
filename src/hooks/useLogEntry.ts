@@ -1,5 +1,9 @@
 import { useCallback, useState } from 'react'
-import { createLogEntry } from '../lib/services/logEntries'
+import {
+  createLogEntry,
+  getBestWeightKg,
+  type UpdateLogEntryInput,
+} from '../lib/services/logEntries'
 import type { LogEntry, WeightUnit } from '../types/domain'
 
 export interface NewLogEntryInput {
@@ -7,7 +11,20 @@ export interface NewLogEntryInput {
   unit: WeightUnit
   reps: number
   sets: number
+  notes: string
 }
+
+// Resultado de guardar un registro nuevo: el registro y si fue récord
+// personal (ver isWeightRecord), para que la pantalla siguiente lo festeje.
+export interface SavedLogEntry {
+  entry: LogEntry
+  isRecord: boolean
+}
+
+// La columna `notes` no tiene límite en la base; este límite es de la app,
+// para notas cortas ("me dolió el hombro", "agarre cerrado") que no rompan
+// la lista de registros.
+export const NOTES_MAX_LENGTH = 200
 
 // Libra internacional, definición exacta.
 const KG_PER_LB = 0.45359237
@@ -49,10 +66,42 @@ export function suggestedEntry(
   return { weight: fromKg(lastEntry.weightKg, unit), reps: lastEntry.reps, sets: lastEntry.sets }
 }
 
+// Regla de negocio: un registro es récord personal si su peso supera el
+// mejor peso anterior del usuario en ese ejercicio. Igualarlo no cuenta, y
+// el primer registro de un ejercicio tampoco (no hay marca que superar).
+export function isWeightRecord(previousBestKg: number | null, weightKg: number): boolean {
+  return previousBestKg !== null && weightKg > previousBestKg
+}
+
+// Validación y normalización compartida entre alta (createEntry) y edición
+// (useExerciseHistory.updateEntry): convierte el peso a kg y limpia la nota.
+export function toLogEntryValues(input: NewLogEntryInput): UpdateLogEntryInput {
+  if (Number.isNaN(input.weight) || input.weight < 0) {
+    throw new Error('El peso tiene que ser 0 o mayor')
+  }
+  if (!Number.isInteger(input.reps) || input.reps <= 0) {
+    throw new Error('Las repeticiones tienen que ser un número mayor a 0')
+  }
+  if (!Number.isInteger(input.sets) || input.sets <= 0) {
+    throw new Error('Las series tienen que ser un número mayor a 0')
+  }
+  const notes = input.notes.trim()
+  if (notes.length > NOTES_MAX_LENGTH) {
+    throw new Error(`La nota puede tener hasta ${NOTES_MAX_LENGTH} caracteres`)
+  }
+
+  return {
+    weightKg: toKg(input.weight, input.unit),
+    reps: input.reps,
+    sets: input.sets,
+    notes: notes || null,
+  }
+}
+
 interface UseLogEntryResult {
   saving: boolean
   error: string | null
-  createEntry: (input: NewLogEntryInput) => Promise<LogEntry>
+  createEntry: (input: NewLogEntryInput) => Promise<SavedLogEntry>
 }
 
 export function useLogEntry(exerciseId: string | null, userId: string | null): UseLogEntryResult {
@@ -62,28 +111,17 @@ export function useLogEntry(exerciseId: string | null, userId: string | null): U
   const createEntry = useCallback(
     async (input: NewLogEntryInput) => {
       if (!exerciseId || !userId) throw new Error('Falta el ejercicio o el usuario')
-
-      if (Number.isNaN(input.weight) || input.weight < 0) {
-        throw new Error('El peso tiene que ser 0 o mayor')
-      }
-      if (!Number.isInteger(input.reps) || input.reps <= 0) {
-        throw new Error('Las repeticiones tienen que ser un número mayor a 0')
-      }
-      if (!Number.isInteger(input.sets) || input.sets <= 0) {
-        throw new Error('Las series tienen que ser un número mayor a 0')
-      }
+      const values = toLogEntryValues(input)
 
       setSaving(true)
       setError(null)
       try {
-        return await createLogEntry({
-          exerciseId,
-          userId,
-          weightKg: toKg(input.weight, input.unit),
-          reps: input.reps,
-          sets: input.sets,
-          notes: null,
-        })
+        // La mejor marca se consulta *antes* de insertar (si no, incluiría el
+        // registro nuevo). Si esa consulta falla, se guarda igual: el festejo
+        // del récord no puede bloquear el registro.
+        const previousBestKg = await getBestWeightKg(exerciseId, userId).catch(() => null)
+        const entry = await createLogEntry({ exerciseId, userId, ...values })
+        return { entry, isRecord: isWeightRecord(previousBestKg, entry.weightKg) }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'No se pudo guardar el registro'
         setError(message)

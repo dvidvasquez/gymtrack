@@ -4,6 +4,7 @@ import { RequireAuth } from '../components/RequireAuth'
 import { RequireOwner } from '../components/RequireOwner'
 import { RequireProfile } from '../components/RequireProfile'
 import { EditExercisePage } from '../pages/EditExercisePage'
+import { EditLogEntryPage } from '../pages/EditLogEntryPage'
 import { ExercisesPage } from '../pages/ExercisesPage'
 import { HomePage } from '../pages/HomePage'
 import { LoginPage } from '../pages/LoginPage'
@@ -30,6 +31,10 @@ export function AppRouter() {
             <Route path="/log/:qrCode" element={<LogPage />} />
             <Route path="/log/exercise/:exerciseId" element={<LogByExercisePage />} />
             <Route path="/progress/:exerciseId" element={<ProgressPage />} />
+            <Route
+              path="/progress/:exerciseId/entries/:entryId/edit"
+              element={<EditLogEntryPage />}
+            />
             <Route path="/exercises" element={<ExercisesPage />} />
             <Route element={<RequireOwner />}>
               <Route path="/exercises/new" element={<NewExercisePage />} />

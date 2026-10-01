@@ -63,12 +63,16 @@ export function LogByExercisePage() {
     <ExerciseLogForm
       formId={LOG_FORM_ID}
       exercise={exercise}
-      lastEntry={lastEntry}
-      lastEntryLoading={lastEntryLoading}
-      lastEntryError={lastEntryError}
-      onRetryLastEntry={retryLastEntry}
+      lastEntry={{
+        entry: lastEntry,
+        loading: lastEntryLoading,
+        error: lastEntryError,
+        onRetry: retryLastEntry,
+      }}
       onSave={createEntry}
-      onSuccess={() => navigate('/home', { viewTransition: true, state: { justSaved: true } })}
+      onSuccess={({ isRecord }) =>
+        navigate('/home', { viewTransition: true, state: { justSaved: true, newRecord: isRecord } })
+      }
     />
   )
 }

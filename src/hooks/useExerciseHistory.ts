@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { deleteLogEntry, getLogEntriesForExercise } from '../lib/services/logEntries'
+import {
+  deleteLogEntry,
+  getLogEntriesForExercise,
+  updateLogEntry,
+} from '../lib/services/logEntries'
+import { isWeightRecord, toLogEntryValues, type NewLogEntryInput } from './useLogEntry'
 import type { LogEntry, ProgressMetric } from '../types/domain'
 
 function roundTo1(value: number): number {
@@ -24,6 +29,19 @@ export function metricValue(entry: LogEntry, metric: ProgressMetric): number {
   }
 }
 
+// Ids de los registros que fueron récord personal *en su momento*: su peso
+// superó a todos los anteriores (misma regla que al guardar, isWeightRecord).
+// `history` viene ordenado del más viejo al más nuevo.
+export function recordEntryIds(history: LogEntry[]): Set<string> {
+  const records = new Set<string>()
+  let bestKg: number | null = null
+  for (const entry of history) {
+    if (isWeightRecord(bestKg, entry.weightKg)) records.add(entry.id)
+    if (bestKg === null || entry.weightKg > bestKg) bestKg = entry.weightKg
+  }
+  return records
+}
+
 interface UseExerciseHistoryResult {
   history: LogEntry[]
   loading: boolean
@@ -31,6 +49,7 @@ interface UseExerciseHistoryResult {
   error: string | null
   retry: () => void
   removeEntry: (id: string) => Promise<void>
+  updateEntry: (id: string, input: NewLogEntryInput) => Promise<LogEntry>
 }
 
 const LOAD_ERROR_MESSAGE = 'No se pudo cargar tu historial. Revisá tu conexión y reintentá.'
@@ -84,5 +103,14 @@ export function useExerciseHistory(
     setHistory((prev) => prev.filter((entry) => entry.id !== id))
   }, [])
 
-  return { history, loading, error, retry, removeEntry }
+  // Edición de un registro existente (peso, reps, series, nota; la fecha no
+  // cambia). Misma validación que el alta. El RLS de log_entries ya limita
+  // la edición a los registros propios.
+  const updateEntry = useCallback(async (id: string, input: NewLogEntryInput) => {
+    const updated = await updateLogEntry(id, toLogEntryValues(input))
+    setHistory((prev) => prev.map((entry) => (entry.id === id ? updated : entry)))
+    return updated
+  }, [])
+
+  return { history, loading, error, retry, removeEntry, updateEntry }
 }
