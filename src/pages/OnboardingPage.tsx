@@ -5,7 +5,6 @@ import { LoadErrorCard } from '../components/LoadErrorCard'
 import { ProfileForm } from '../components/ProfileForm'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
-import { useAuth } from '../hooks/useAuth'
 import { isProfileComplete, useProfile } from '../hooks/useProfile'
 
 const ONBOARDING_FORM_ID = 'onboarding-form'
@@ -15,8 +14,7 @@ interface OnboardingLocationState {
 }
 
 export function OnboardingPage() {
-  const { user } = useAuth()
-  const { profile, loading, error, retry, saveProfileDetails } = useProfile(user?.id ?? null)
+  const { profile, loading, error, retry, saveProfileDetails } = useProfile()
   const navigate = useNavigate()
   const location = useLocation()
   const [submitting, setSubmitting] = useState(false)

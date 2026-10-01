@@ -12,7 +12,7 @@ interface LoginLocationState {
 
 export function LoginPage() {
   const { user, loading: authLoading, signInWithGoogle } = useAuth()
-  const { profile, loading: profileLoading } = useProfile(user?.id ?? null)
+  const { profile, loading: profileLoading } = useProfile()
   const location = useLocation()
   const from = (location.state as LoginLocationState | null)?.from
   const destination = from ? `${from.pathname}${from.search}` : undefined

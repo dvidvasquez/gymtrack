@@ -1,41 +1,10 @@
-import type { User } from '@supabase/supabase-js'
-import { useEffect, useState } from 'react'
-import {
-  getSession,
-  signInWithGoogle,
-  signOut,
-  subscribeToAuthChanges,
-} from '../lib/services/auth'
+import { useContext } from 'react'
+import { SessionContext } from './sessionContext'
+import type { AuthState } from './useAuthState'
 
-interface UseAuthResult {
-  user: User | null
-  loading: boolean
-  signInWithGoogle: (redirectPath?: string) => Promise<void>
-  signOut: () => Promise<void>
-}
-
-export function useAuth(): UseAuthResult {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    getSession()
-      .then((session) => {
-        setUser(session?.user ?? null)
-        setLoading(false)
-      })
-      .catch(() => {
-        // Sin sesión legible se trata como deslogueado (→ /login) en vez de
-        // dejar los guards en `loading` para siempre (pantalla en blanco).
-        setUser(null)
-        setLoading(false)
-      })
-
-    return subscribeToAuthChanges((session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-  }, [])
-
-  return { user, loading, signInWithGoogle, signOut }
+// Sesión actual, compartida por toda la app (ver components/SessionProvider).
+export function useAuth(): AuthState {
+  const session = useContext(SessionContext)
+  if (!session) throw new Error('useAuth tiene que usarse dentro de SessionProvider')
+  return session.auth
 }

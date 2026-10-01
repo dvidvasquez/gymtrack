@@ -1,8 +1,9 @@
 import { IconBarbell, IconDeviceFloppy, IconPlus } from '@tabler/icons-react'
-import { useState } from 'react'
-import { Link, Outlet } from 'react-router-dom'
+import { Suspense, useState } from 'react'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { FooterActionContext, type FooterActionKind, type FooterActionState } from './FooterActionContext'
 import { HeaderMenu } from './HeaderMenu'
+import { PageErrorBoundary } from './PageErrorBoundary'
 import { Button } from './ui/Button'
 import { LinkButton } from './ui/LinkButton'
 
@@ -28,6 +29,7 @@ const ICON_BY_KIND: Record<FooterActionKind, typeof IconBarbell> = {
 // cambia a "agregar registro" y LogPage/ProfilePage/etc. a "guardar".
 export function AppShell() {
   const [footerAction, setFooterAction] = useState<FooterActionState | null>(null)
+  const { pathname } = useLocation()
   const action = footerAction ?? DEFAULT_ACTION
   const Icon = ICON_BY_KIND[action.kind]
 
@@ -47,7 +49,19 @@ export function AppShell() {
       <main className="flex-1 p-4 pb-28 md:p-6 md:pb-28">
         <div className="max-w-md mx-auto">
           <FooterActionContext.Provider value={setFooterAction}>
-            <Outlet />
+            {/* Suspense: páginas con carga diferida (router/lazyPage.ts) se
+                descargan al entrar, sin perder header ni footer mientras tanto. */}
+            <PageErrorBoundary resetKey={pathname}>
+              <Suspense
+                fallback={
+                  <p className="text-base font-normal text-gray-500 dark:text-gray-400">
+                    Cargando...
+                  </p>
+                }
+              >
+                <Outlet />
+              </Suspense>
+            </PageErrorBoundary>
           </FooterActionContext.Provider>
         </div>
       </main>
