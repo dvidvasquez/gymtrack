@@ -9,7 +9,7 @@ Side project con dos objetivos: practicar el flujo de construir una app con ayud
 ## Qué hace
 
 - **Login con Google** y perfil con nombre, peso, estatura y fecha de nacimiento (se piden una vez y se editan desde el menú → Perfil).
-- **Registrar un ejercicio:** el botón del footer ofrece escanear el QR de la máquina o elegir el ejercicio de la lista. El formulario arranca precargado con tu último registro (peso, repeticiones y series), con un botón para sumar peso; el peso se puede cargar en kg o lb y siempre se guarda en kg.
+- **Registrar un ejercicio:** el botón del footer ofrece escanear el QR de la máquina o elegir el ejercicio de la lista. El formulario arranca precargado con tu último registro (peso, repeticiones y series), con un botón para sumar peso; el peso se puede cargar en kg o lb; si elegís lb, toda la app muestra los pesos en libras (siempre se guardan en kg).
 - **Actividad reciente** en Home, agrupada por día (Hoy, Ayer, fecha): cada día muestra los ejercicios que hiciste ese día, con su último registro.
 - **Progreso por ejercicio:** gráfico de peso, 1RM estimado o volumen en el tiempo, y lista de registros con sus notas; cada registro se puede editar o borrar.
 - **Notas por registro** ("agarre cerrado", "me molestó el hombro"), opcionales, hasta 200 caracteres.

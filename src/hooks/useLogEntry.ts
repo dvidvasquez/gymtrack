@@ -47,6 +47,19 @@ export function fromKg(weightKg: number, unit: WeightUnit): number {
   return roundTo2(unit === 'lb' ? weightKg / KG_PER_LB : weightKg)
 }
 
+// Peso guardado (siempre en kg) mostrado en la unidad preferida del usuario
+// (ver useWeightUnit): "80 kg" o "176.37 lb". Todas las pantallas muestran
+// los pesos con esto, así la preferencia de lb se respeta en toda la app.
+export function formatWeight(weightKg: number, unit: WeightUnit): string {
+  return `${fromKg(weightKg, unit)} ${unit}`
+}
+
+// "80 kg × 10 reps × 3 series" (o en lb), el resumen de un registro que se
+// repite en Home, "Último registro" y la lista de Progreso.
+export function formatEntrySummary(entry: LogEntry, unit: WeightUnit): string {
+  return `${formatWeight(entry.weightKg, unit)} × ${entry.reps} reps × ${entry.sets} series`
+}
+
 // Salto del botón "+" junto al peso: el disco más chico que se suele
 // agregar por lado en cada sistema.
 export const WEIGHT_INCREMENT: Record<WeightUnit, number> = { kg: 2.5, lb: 5 }
