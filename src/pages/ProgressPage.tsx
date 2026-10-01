@@ -1,6 +1,6 @@
-import { IconTrash } from '@tabler/icons-react'
+import { IconPencil, IconTrash, IconTrophy } from '@tabler/icons-react'
 import { useState, type ReactNode } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import {
   CartesianGrid,
   Line,
@@ -16,7 +16,7 @@ import { Card } from '../components/ui/Card'
 import { SegmentedControl } from '../components/ui/SegmentedControl'
 import { useAuth } from '../hooks/useAuth'
 import { useExerciseById } from '../hooks/useExerciseById'
-import { metricValue, useExerciseHistory } from '../hooks/useExerciseHistory'
+import { metricValue, recordEntryIds, useExerciseHistory } from '../hooks/useExerciseHistory'
 import type { ProgressMetric } from '../types/domain'
 
 const METRIC_OPTIONS: { value: ProgressMetric; label: string }[] = [
@@ -118,6 +118,8 @@ export function ProgressPage() {
   // X en vez de una fecha ya formateada: si dos registros caen el mismo día,
   // el string formateado ("17/9") se repite y Recharts los trata como la
   // misma categoría en el eje, mostrando siempre el tooltip del primero.
+  const records = recordEntryIds(history)
+
   const chartData = history.map((entry) => ({
     createdAt: entry.createdAt,
     value: metricValue(entry, metric),
@@ -199,22 +201,46 @@ export function ProgressPage() {
               const summary = `${entry.weightKg} kg × ${entry.reps} reps × ${entry.sets} series`
               return (
                 <div key={entry.id} className="flex items-center justify-between gap-2 py-2">
-                  <div className="flex flex-col">
-                    <span className="text-base font-normal text-gray-700 dark:text-gray-300">
+                  <div className="flex flex-col min-w-0">
+                    <span className="flex items-center gap-1 text-base font-normal text-gray-700 dark:text-gray-300">
                       {summary}
+                      {records.has(entry.id) && (
+                        <IconTrophy
+                          size={16}
+                          stroke={2}
+                          role="img"
+                          aria-label="Récord personal"
+                          className="shrink-0 text-red-600 dark:text-red-400"
+                        />
+                      )}
                     </span>
+                    {entry.notes && (
+                      <span className="text-sm font-normal text-gray-500 dark:text-gray-400 break-words">
+                        “{entry.notes}”
+                      </span>
+                    )}
                     <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
                       {date}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    aria-label={`Eliminar registro del ${date}`}
-                    onClick={() => handleDelete(entry.id, `del ${date} (${summary})`)}
-                    className="h-9 w-9 shrink-0 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >
-                    <IconTrash size={18} stroke={2} />
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Link
+                      to={`/progress/${exercise.id}/entries/${entry.id}/edit`}
+                      viewTransition
+                      aria-label={`Editar registro del ${date}`}
+                      className="h-9 w-9 shrink-0 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <IconPencil size={18} stroke={2} />
+                    </Link>
+                    <button
+                      type="button"
+                      aria-label={`Eliminar registro del ${date}`}
+                      onClick={() => handleDelete(entry.id, `del ${date} (${summary})`)}
+                      className="h-9 w-9 shrink-0 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <IconTrash size={18} stroke={2} />
+                    </button>
+                  </div>
                 </div>
               )
             })}

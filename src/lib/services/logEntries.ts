@@ -70,6 +70,46 @@ export async function createLogEntry(input: CreateLogEntryInput): Promise<LogEnt
   return toLogEntry(data)
 }
 
+export interface UpdateLogEntryInput {
+  weightKg: number
+  reps: number
+  sets: number
+  notes: string | null
+}
+
+export async function updateLogEntry(id: string, input: UpdateLogEntryInput): Promise<LogEntry> {
+  const { data, error } = await supabase
+    .from('log_entries')
+    .update({
+      weight_kg: input.weightKg,
+      reps: input.reps,
+      sets: input.sets,
+      notes: input.notes,
+    })
+    .eq('id', id)
+    .select('*')
+    .single()
+
+  if (error) throw error
+  return toLogEntry(data)
+}
+
+// Mejor peso registrado por el usuario en un ejercicio, o null si nunca lo
+// registró.
+export async function getBestWeightKg(exerciseId: string, userId: string): Promise<number | null> {
+  const { data, error } = await supabase
+    .from('log_entries')
+    .select('weight_kg')
+    .eq('exercise_id', exerciseId)
+    .eq('user_id', userId)
+    .order('weight_kg', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw error
+  return data ? data.weight_kg : null
+}
+
 export async function getLogEntriesForExercise(
   exerciseId: string,
   userId: string,
