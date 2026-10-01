@@ -17,6 +17,8 @@ import { SegmentedControl } from '../components/ui/SegmentedControl'
 import { useAuth } from '../hooks/useAuth'
 import { useExerciseById } from '../hooks/useExerciseById'
 import { metricValue, recordEntryIds, useExerciseHistory } from '../hooks/useExerciseHistory'
+import { formatEntrySummary, fromKg } from '../hooks/useLogEntry'
+import { useWeightUnit } from '../hooks/useWeightUnit'
 import type { ProgressMetric } from '../types/domain'
 
 const METRIC_OPTIONS: { value: ProgressMetric; label: string }[] = [
@@ -82,6 +84,9 @@ export function ProgressPage() {
     removeEntry,
   } = useExerciseHistory(exerciseId, user?.id ?? null)
   const [metric, setMetric] = useState<ProgressMetric>('weight')
+  // Unidad preferida (la que se eligió en el formulario de registro): el
+  // gráfico, el tooltip y la lista se muestran en kg o lb según esta.
+  const [unit] = useWeightUnit()
 
   useFooterAction(
     exercise
@@ -122,7 +127,7 @@ export function ProgressPage() {
 
   const chartData = history.map((entry) => ({
     createdAt: entry.createdAt,
-    value: metricValue(entry, metric),
+    value: fromKg(metricValue(entry, metric), unit),
   }))
 
   return (
@@ -174,7 +179,7 @@ export function ProgressPage() {
                     />
                     <Tooltip
                       labelFormatter={formatTooltipDate}
-                      formatter={(value) => `${value} kg`}
+                      formatter={(value) => `${value} ${unit}`}
                     />
                     <Line
                       type="monotone"
@@ -198,7 +203,7 @@ export function ProgressPage() {
           <Card className="flex flex-col divide-y divide-gray-200 dark:divide-gray-800 py-2">
             {[...history].reverse().map((entry) => {
               const date = formatEntryDate(entry.createdAt)
-              const summary = `${entry.weightKg} kg × ${entry.reps} reps × ${entry.sets} series`
+              const summary = formatEntrySummary(entry, unit)
               return (
                 <div key={entry.id} className="flex items-center justify-between gap-2 py-2">
                   <div className="flex flex-col min-w-0">

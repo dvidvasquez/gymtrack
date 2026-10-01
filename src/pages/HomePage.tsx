@@ -5,6 +5,7 @@ import { ExerciseCard } from '../components/ExerciseCard'
 import { LoadErrorCard } from '../components/LoadErrorCard'
 import { useAuth } from '../hooks/useAuth'
 import { toLocalDayKey, useRecentActivity } from '../hooks/useRecentActivity'
+import { useWeightUnit } from '../hooks/useWeightUnit'
 
 interface LogSavedState {
   justSaved?: boolean
@@ -36,6 +37,7 @@ function formatDayLabel(day: string): string {
 export function HomePage() {
   const { user } = useAuth()
   const { days, loading, error, retry } = useRecentActivity(user?.id ?? null)
+  const [unit] = useWeightUnit()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -96,7 +98,12 @@ export function HomePage() {
               </h2>
               <div className="flex flex-col gap-3">
                 {activity.map(({ exercise, lastEntry }) => (
-                  <ExerciseCard key={exercise.id} exercise={exercise} lastEntry={lastEntry} />
+                  <ExerciseCard
+                    key={exercise.id}
+                    exercise={exercise}
+                    lastEntry={lastEntry}
+                    unit={unit}
+                  />
                 ))}
               </div>
             </section>

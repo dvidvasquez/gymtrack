@@ -2,9 +2,9 @@ import { IconPlus } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import {
   addWeightIncrement,
+  formatEntrySummary,
   NOTES_MAX_LENGTH,
   suggestedEntry,
-  toKg,
   WEIGHT_INCREMENT,
   type NewLogEntryInput,
 } from '../hooks/useLogEntry'
@@ -131,8 +131,7 @@ export function ExerciseLogForm<T>({
           ) : lastEntry.entry ? (
             <>
               <p className="text-base font-normal text-gray-700 dark:text-gray-300">
-                {lastEntry.entry.weightKg} kg × {lastEntry.entry.reps} reps ×{' '}
-                {lastEntry.entry.sets} series
+                {formatEntrySummary(lastEntry.entry, unit)}
               </p>
               {lastEntry.entry.notes && (
                 <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
@@ -237,11 +236,6 @@ export function ExerciseLogForm<T>({
         {showsSuggestion && (
           <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
             Precargado con tu último registro.
-          </p>
-        )}
-        {unit === 'lb' && weightValue !== '' && Number(weightValue) >= 0 && (
-          <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
-            Se guarda como {toKg(Number(weightValue), 'lb')} kg
           </p>
         )}
         {error && <p className="text-sm font-normal text-amber-600">{error}</p>}
